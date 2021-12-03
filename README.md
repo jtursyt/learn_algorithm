@@ -9,7 +9,7 @@
   * 分治
 * 简单数据结构
   * 栈/队列
-  * [单调栈/单调队列](./Data structure/Monotone stack&queue.md)
+  * [单调栈/单调队列](./‘Data structure’/Monotone stack&queue.md)
   * [优先队列（堆）](./Data structure/Heap.md)
   * 链表与邻接表
   * 哈希表
