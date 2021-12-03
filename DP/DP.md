@@ -1454,10 +1454,20 @@ if __name__ == '__main__':
 
 ##### 221. 最大正方形
 
-* 由于正方形的规则性可以采用动态规划，dp\[i][j]表示以matrix(i-1,j-1)为右下角的正方形的最大边长。
+* 由于正方形的规则性可以采用动态规划，dp\[i][j]表示以matrix(i-1,j-1)为右下角的正方形的最大边长，被最近的三个正方形的最短边约束。
 
 ```python
-
+# 简化为一维dp
+class Solution:
+    def maximalSquare(self, matrix: List[List[str]]) -> int:
+        m, n = len(matrix), len(matrix[0])
+        res = nw = 0
+        dp = [0]*(n+1)
+        for i in range(m):
+            for j in range(1,n+1):
+                dp[j], nw = min(dp[j],dp[j-1],nw)+1 if matrix[i][j-1]=='1' else 0,dp[j]
+                res = max(dp[j],res)
+        return res*res
 ```
 
 ##### I-区域

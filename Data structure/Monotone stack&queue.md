@@ -72,7 +72,7 @@ class Solution:
         return res 
 ```
 
-* 暴力法，求每个点所在边的左右边界和高。
+* 暴力法，求每个点所在边的左右边界和高r。
 
 ```python
 class Solution:
