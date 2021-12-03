@@ -24,7 +24,7 @@
   * 最小表示法
   * 后缀数组
 * 复杂数据结构
-  * [并查集](./Complex_structure/Union-find set.md)
+  * [并查集](./Complex_structure/Union-find_set.md)
   * 树状数组
   * 线段树
   * 分块
