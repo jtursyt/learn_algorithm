@@ -1,4 +1,4 @@
-### 对leetcode中的一些题目进行归纳和解答(python)
+### 基本算法题目的归纳和解答 (python)
 
 * 基本算法
   * 位运算
@@ -9,8 +9,8 @@
   * 分治
 * 简单数据结构
   * 栈/队列
-  * [单调栈/单调队列](./‘Data structure’/Monotone stack&queue.md)
-  * [优先队列（堆）](./Data structure/Heap.md)
+  * [单调栈/单调队列](./Data_structure/Monotone_stack&queue.md)
+  * [优先队列（堆）](./Data_structure/Heap.md)
   * 链表与邻接表
   * 哈希表
   * Trie
@@ -24,7 +24,7 @@
   * 最小表示法
   * 后缀数组
 * 复杂数据结构
-  * [并查集](./Complex structure/Union-find set.md)
+  * [并查集](./Complex_structure/Union-find set.md)
   * 树状数组
   * 线段树
   * 分块
@@ -53,7 +53,7 @@
   * 容斥原理
   * 线性代数
 * 图
-  * [最短路](./Map/Shortest path.md)
+  * [最短路](./Map/Shortest_path.md)
     * Dijkstra
     * Floyd
   * 最小生成树
