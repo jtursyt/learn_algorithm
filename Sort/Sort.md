@@ -529,9 +529,40 @@ def count_sort(arr):
     return res
 ```
 
+#### 1005. K次取反后最大化的数组和
+
+* 找到负数，0和正数的部分分别处理，也可以用哈希表解决。
+
+```python
+class Solution:
+    def largestSumAfterKNegations(self, nums: List[int], k: int) -> int:
+        buckets = [0]*201
+        res = sum(nums)
+        for each in nums:
+            buckets[each+100] += 1
+        # 负数全部转化为正数
+        for i in range(100):	
+            if buckets[i]:
+                ops = min(k,buckets[i])
+                res -= ops*(i-100)*2
+                buckets[i] -= ops
+                buckets[200-i] += ops
+                k -= ops
+                if k == 0:
+                    break
+        # 当取反次数为奇数且无0时需要将最小的正数转换为负数
+        if k>0 and k%2 and not buckets[100]:	
+            for i in range(101,201):
+                if buckets[i]:
+                    res -= (i-100)*2
+                    break
+        return res
+```
+
 ### 桶排序
 
 * 每个桶存储一定范围的数值，当要被排序的数组内的数值是均匀分配的时候，桶排序使用线性时间，若都分到了一个桶中则退化到nlogn。将数据放在几个有序的桶内（越多越好），将每个桶内的数据进行排序，最后有序地将每个桶中的数据从小到大依次取出，即完成了排序。
+* 题目中对数字大小进行约束时，可以尝试使用桶排序。
 
 ```python
 def bucket_sort(arr):
@@ -603,8 +634,6 @@ class Solution:
             pre = each[0]
         return res
 ```
-
-
 
 ### 基数排序
 
