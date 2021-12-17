@@ -1471,7 +1471,7 @@ https://www.acwing.com/problem/content/279/
 * 怨气值大的孩子分配较多的饼干，对孩子按怨气从大到小进行排序，按照递减的顺序分配饼干，dp\[i][j]表示前i个孩子分配j个饼干时的最小怨气值。按照划分方案中已确定获得1个饼干的孩子数量，该集合可以分成i个子集。
 
 ```python
-# 超时  逆推时间过长
+# 超时  
 class Solution:
     def cookies(self,g,n,m):
         child = list(range(n))
