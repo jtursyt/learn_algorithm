@@ -60,6 +60,24 @@ class Solution:
         return min(dp)
 ```
 
+##### 221. 最大正方形
+
+* 由于正方形的规则性可以采用动态规划，dp\[i][j]表示以matrix(i-1,j-1)为右下角的正方形的最大边长，被最近的三个正方形的最短边约束。
+
+```python
+# 简化为一维dp
+class Solution:
+    def maximalSquare(self, matrix: List[List[str]]) -> int:
+        m, n = len(matrix), len(matrix[0])
+        res = nw = 0
+        dp = [0]*(n+1)
+        for i in range(m):
+            for j in range(1,n+1):
+                dp[j], nw = min(dp[j],dp[j-1],nw)+1 if matrix[i][j-1]=='1' else 0,dp[j]
+                res = max(dp[j],res)
+        return res*res
+```
+
 ##### 152. 乘积最大子数组
 
 * dp[i]记录以i结尾的子数组乘积最大值和最小值。
@@ -1446,38 +1464,52 @@ if __name__ == '__main__':
     print(min(solution.makegrade(A,n),solution.makegrade(A[::-1],n)))
 ```
 
-***
+##### 饼干
 
-##### 85. [最大矩形](../数据结构/单调栈&单调队列)
+https://www.acwing.com/problem/content/279/
 
-* 单调栈，寻找每一行的柱状图中最大矩形。
-
-##### 221. 最大正方形
-
-* 由于正方形的规则性可以采用动态规划，dp\[i][j]表示以matrix(i-1,j-1)为右下角的正方形的最大边长，被最近的三个正方形的最短边约束。
+* 怨气值大的孩子分配较多的饼干，对孩子按怨气从大到小进行排序，按照递减的顺序分配饼干，dp\[i][j]表示前i个孩子分配j个饼干时的最小怨气值。按照划分方案中已确定获得1个饼干的孩子数量，该集合可以分成i个子集。
 
 ```python
-# 简化为一维dp
+# 超时  逆推时间过长
 class Solution:
-    def maximalSquare(self, matrix: List[List[str]]) -> int:
-        m, n = len(matrix), len(matrix[0])
-        res = nw = 0
-        dp = [0]*(n+1)
-        for i in range(m):
-            for j in range(1,n+1):
-                dp[j], nw = min(dp[j],dp[j-1],nw)+1 if matrix[i][j-1]=='1' else 0,dp[j]
-                res = max(dp[j],res)
-        return res*res
+    def cookies(self,g,n,m):
+        child = list(range(n))
+        child.sort(key=lambda x: -g[x])
+        prefix = [0]
+        for i in range(1,n+1):
+            prefix.append(prefix[-1]+g[child[n-i]])
+        dp = [[float('inf')]*(m+1) for _ in range(n+1)]
+        for i in range(n+1):
+            dp[i][0] = 0
+        dp[1] = [0] * (m+1)
+        for i in range(2,n+1):
+            for j in range(i,m+1):
+                dp[i][j] = dp[i][j-i]       # 每个孩子都多发一个饼干，大小关系不变。
+                for k in range(1,i+1):      # 有k个孩子只有1个饼干
+                    dp[i][j] = min(dp[i][j],dp[i-k][j-k]+(i-k)*(prefix[k+n-i]-prefix[n-i]))
+        i,j,h = n,m,0
+        res = [0] * n
+        while i and j:                          # 逆推每个孩子发的饼干数量
+            if j > i and dp[i][j]==dp[i][j-i]:
+                j -= i
+                h += 1                      # 前i个孩子发的饼干数
+            else:
+                for k in range(1,min(i,j)+1):    # 找到分发方案
+                    if dp[i][j] == dp[i-k][j-k]+(i-k)*prefix[k]:
+                        for u in range(i-k+1,i+1):
+                            res[child[u-1]] = h+1
+                        i -= k
+                        j -= k
+                        break
+        return str(dp[-1][-1])+'\n'+' '.join(map(str,res))
+
+if __name__=='__main__':
+    n, m = map(int,input().split())
+    g = list(map(int,input().split()))
+    solu = Solution()
+    print(solu.cookies(g,n,m))
 ```
-
-##### I-区域
-
-https://www.acwing.com/problem/content/description/278/
-
-```python
-```
-
-***
 
 
 
