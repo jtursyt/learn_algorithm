@@ -12,13 +12,12 @@
   * [单调栈/单调队列](./Data_structure/Monotone_stack&queue.md)
   * [优先队列（堆）](./Data_structure/Heap.md)
   * 链表与邻接表
-  * 哈希表
-  * Trie
+  * [哈希表](.//Data_structure/Hash_table.md)
 * 字符串
-  * 哈希
   * 匹配
     * KMP
     * Sunday
+  * [Trie](./Data_structure/Trie.md)
   * 最长回文子串
     * Manacher
   * 最小表示法
@@ -89,4 +88,8 @@
 > 《算法导论》 Thomas H.Cormen, et al.
 >
 > 《算法竞赛进阶指南》 李煜东
+>
+> algorithm-stone https://github.com/acm-clan/algorithm-stone
+>
+> OI wiki https://oi-wiki.org/
 

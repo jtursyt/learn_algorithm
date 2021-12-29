@@ -455,5 +455,37 @@ class Solution:
         return 0
 ```
 
+#### 1705. 吃苹果的最大数目
+
+* 小顶堆，优先队列确定最早坏的苹果先吃。
+
+```python
+class Solution:
+    def eatenApples(self, apples: List[int], days: List[int]) -> int:
+        n = len(apples)
+        heap = []
+        res = 0
+        for i in range(n):
+            while heap and heap[0][0] <= i:
+                heapq.heappop(heap)
+            if apples[i]:
+                heapq.heappush(heap,[days[i]+i,apples[i]])	# 入堆保质期和存量
+            if heap:
+                heap[0][1] -= 1
+                if heap[0][1]==0:
+                    heapq.heappop(heap)
+                res += 1
+        i += 1
+        while heap:
+            while heap and heap[0][0] <= i:
+                heapq.heappop(heap)
+            if heap:
+                nxt = min(heap[0][0]-i,heap[0][1])
+                heapq.heappop(heap)
+                res += nxt
+                i += nxt
+        return res
+```
+
 
 

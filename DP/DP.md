@@ -41,502 +41,115 @@ DP阶段沿各个维度线性增长，从一个或多个“边界点”开始有
 
 这类问题中，需要计算的对象表现出明显的维度以及有序性，每个状态的求解直接构成一个阶段，使得**DP的状态表示就是阶段的表示**。在每个维度上各取一个坐标值作为DP的状态，自然就可以描绘出“已求解部分”在状态空间中的轮廓特征。按顺序依次循环每个维度，根据问题要求递推求解即可。
 
-#### 简单转移
+#### 前缀和
 
-利用数据中的前后缀关系，从一个状态转移到某个维度上的相邻状态，如dp[i-1] --> dp[i] ，dp[j] --> dp[i] (j<i) ，一般取最值或求和。
+##### 53. 最大子数组和
 
-##### 120. 三角形最小路径和
-
-* dp\[i][j]表示走到第i行第j列的最小路径和。
+* dp[i]表示以i结尾的最大子数组和。
 
 ```python
 class Solution:
-    def minimumTotal(self, triangle: List[List[int]]) -> int:
-        n = len(triangle)
-        dp = [0]+[float('inf')] * n
+    def maxSubArray(self, nums: List[int]) -> int:
+        n = len(nums)
+        dp = [0] * n
         for i in range(n):
-            for j in range(i,-1,-1):
-                dp[j] = min(dp[j],dp[j-1])+triangle[i][j]
-        return min(dp)
-```
-
-##### 221. 最大正方形
-
-* 由于正方形的规则性可以采用动态规划，dp\[i][j]表示以matrix(i-1,j-1)为右下角的正方形的最大边长，被最近的三个正方形的最短边约束。
-
-```python
-# 简化为一维dp
-class Solution:
-    def maximalSquare(self, matrix: List[List[str]]) -> int:
-        m, n = len(matrix), len(matrix[0])
-        res = nw = 0
-        dp = [0]*(n+1)
-        for i in range(m):
-            for j in range(1,n+1):
-                dp[j], nw = min(dp[j],dp[j-1],nw)+1 if matrix[i][j-1]=='1' else 0,dp[j]
-                res = max(dp[j],res)
-        return res*res
-```
-
-##### 152. 乘积最大子数组
-
-* dp[i]记录以i结尾的子数组乘积最大值和最小值。
-
-```python
-class Solution:
-    def maxProduct(self, nums: List[int]) -> int:
-        n = len(nums)
-        dp = [[nums[i]]*2 for i in range(n)]
-        for i in range(1,n):
-            if nums[i] >= 0:
-                dp[i][0] = max(nums[i],dp[i-1][0]*nums[i])
-                dp[i][1] = min(nums[i],dp[i-1][1]*nums[i])
-            else:
-                dp[i][0] = max(nums[i],dp[i-1][1]*nums[i])
-                dp[i][1] = min(nums[i],dp[i-1][0]*nums[i])
-        return max(dp[i][0] for i in range(n))
-    
-# 优化空间
-class Solution:
-    def maxProduct(self, nums: List[int]) -> int:
-        min_ = max_ = res = nums[0]
-        for i in range(1,len(nums)):
-            if nums[i] >=0:
-                max_, min_ = max(max_*nums[i],nums[i]),min(min_*nums[i],nums[i])
-            else:
-                max_, min_ = max(min_*nums[i],nums[i]),min(max_*nums[i],nums[i])
-            res = max(res,max_)
-        return res
-```
-
-##### 1186. 删除一次得到子数组的最大和
-
-* dp\[i][0]记录以i结尾的最大子序和，dp\[i][1]记录从以i结尾的子序列中删除一个后得到的最大和。
-
-```python
-class Solution:
-    def maximumSum(self, arr: List[int]) -> int:
-        n = len(arr)
-        dp = [[0]*2 for _ in range(n)]
-        dp[0][0] = res = arr[0]
-        for i in range(1,n):
-            dp[i][0] = max(dp[i-1][0]+arr[i],arr[i])
-            dp[i][1] = max(dp[i-1][0],dp[i-1][1]+arr[i])
-            res = max(res,dp[i][0],dp[i][1])	# 删除或不删除
-        return res
-```
-
-##### 487. 最大连续1的个数 II
-
-*  dp\[i][0]为以 i 为结尾未使用操作的最大的连续 1 的个数，dp\[i][1]为以 i为结尾使用操作将 [0,i]某个 0 变成 1 的最大的连续 1 的个数。
-
-
-```python
-class Solution:
-    def findMaxConsecutiveOnes(self, nums: List[int]) -> int:
-        n = len(nums)
-        dp = [[0]*2 for _ in range(n)]
-        res = 0
-        for i in range(n):
-            if nums[i]:
-                dp[i][0] = dp[i-1][0] + 1
-                dp[i][1] = dp[i-1][1] + 1
-            else:
-                dp[i][1] = dp[i-1][0] + 1
-            res = max(res,dp[i][0],dp[i][1])
-        return res
-```
-
-* 滑动窗口，维护一个0数量小于2的窗口。
-
-```python
-class Solution:
-    def findMaxConsecutiveOnes(self, nums: List[int]) -> int:
-        i = res = flag = 0
-        for j in range(len(nums)):
-            if not nums[j]:
-                flag += 1
-            while flag > 1:
-                if not nums[i]:
-                    flag -= 1
-                i += 1
-            res = max(res, j-i+1)
-        return res
-    
-# 处理数据流，队列记录0的位置
-class Solution:
-    def findMaxConsecutiveOnes(self, nums: List[int]) -> int:
-        i = res = cnt = 0
-        q = deque([])
-        for j in range(len(nums)):
-            if not nums[j]:
-                q.append(j)
-                cnt += 1
-            while cnt > 1:
-                i = q.popleft()+1
-                cnt -= 1
-            res = max(res, j-i+1)
-        return res
-```
-
-##### 516. 最长回文子序列
-
-* dp\[i][j]表示i~j的最长子序列长度。注意遍历的顺序，提前计算所需的状态。
-
-```python
-class Solution:
-    def longestPalindromeSubseq(self, s: str) -> int:
-        n = len(s)
-        dp = [[1]*n for _ in range(n)]
-        for j in range(1,n):
-            for i in range(j-1,-1,-1):
-                if s[i] == s[j]:
-                    dp[i][j] = (dp[i+1][j-1] if i+1<j else 0) + 2
-                else:
-                    dp[i][j] = max(dp[i+1][j],dp[i][j-1])
-        return dp[0][-1]
-```
-
-##### 5. 最长回文子串
-
-* dp\[i][j]表示字符串是否是回文子串。
-
-```python
-class Solution:
-    def longestPalindrome(self, s: str) -> str:
-        n = len(s)
-        dp = [[False]*n for _ in range(n)]
-        res = s[0]
-        for j in range(n):
-            dp[j][j] = True
-            for i in range(j-1,-1,-1):
-                if s[i] == s[j]:
-                    dp[i][j] = dp[i+1][j-1] if i+1<j else True
-                    if dp[i][j] and j-i+1 > len(res):
-                        res = s[i:j+1]
-        return res
-```
-
-##### 131. 分割回文串
-
-* dp记录所有的回文子串，然后利用回溯法枚举所有分割方式。
-
-```python
-class Solution:
-    def partition(self, s: str) -> List[List[str]]:
-        def dfs(i,cur):
-            if i == n:
-                res.append(cur)
-                return 
-            for j in range(i,n):
-                if dp[i][j]:
-                    dfs(j+1,cur+[s[i:j+1]])
-
-        n = len(s)
-        dp = [[False]*n for _ in range(n)]
-        for j in range(n):
-            dp[j][j] = True
-            for i in range(j-1,-1,-1):
-                if s[i] == s[j]:
-                    dp[i][j] = dp[i+1][j-1] if i+1<j else True
-        res = []
-        dfs(0,[])
-        return res
-```
-
-##### 132. 分割回文串 II
-
-* dp[i]表示s[0:i+1]的最小分割次数。
-
-```python
-class Solution:
-    def minCut(self, s: str) -> int:
-        n = len(s)
-        dp = list(range(n))
-        for j in range(1,n):  
-            if s[:j+1] == s[:j+1][::-1]:
-                dp[j] = 0
-                continue
-            for i in range(j,0,-1):
-                if s[i:j+1]==s[i:j+1][::-1]:
-                    dp[j] = min(dp[j],dp[i-1]+1)     
-        return dp[-1]
-```
-
-* 同时记录回文串情况和分割次数。
-
-```python
-class Solution:
-    def minCut(self, s: str) -> int:
-        n = len(s)
-        p = [[False]*n for _ in range(n)]
-        dp = list(range(n))
-        for j in range(1,n):
-            p[j][j] = True
-            dp[j] = dp[j-1]+1
-            for i in range(j-1,-1,-1):
-                if s[i]==s[j]:
-                    p[i][j] = p[i+1][j-1] if i+1<j else True
-                    if p[i][j]:
-                        dp[j] = min(dp[j],dp[i-1]+1) if i else 0
-        return dp[-1]
-```
-
-* 记忆化递归。
-
-```python
-class Solution:
-    @functools.lru_cache(None)
-    def minCut(self, s: str) -> int:
-        if s == s[::-1]:
-            return 0
-        ans = float("inf")
-        for i in range(1, len(s) + 1):
-            if s[:i] == s[:i][::-1]:
-                ans = min(self.minCut(s[i:]) + 1, ans)
-        return ans
-```
-
-
-
-***
-
-**LIS**
-
-##### 300. 最长递增子序列   LIS
-
-* 动态规划。dp[i]表示以nums[i]结尾的最长递增子序列的长度。dp[i]既代表以i结尾的状态，同时也是子问题求解的一个阶段。O(n^2)
-
-```python
-class Solution:
-    def lengthOfLIS(self, nums: List[int]) -> int:
-        n = len(nums)
-        dp = [1]*n
-        for i in range(1,n):
-            for j in range(i):
-                if nums[i] > nums[j]:
-                    dp[i] = max(dp[i],dp[j]+1)
+            dp[i] = max(nums[i],nums[i]+dp[i-1])
         return max(dp)
 ```
 
-* 贪心+二分。单调栈保存现在发现的上升子序列，为了使子序列尽可能的长，需要寻找尽可能小的值放到序列末尾。O(nlogn)
+* 前缀和
 
 ```python
 class Solution(object):
-    def lengthOfLIS(self, nums):
-        seq = []
+    def maxSubArray(self, nums):
+        sums = mins = 0
+        res = float('-inf')
         for each in nums:
-            if not seq or each > seq[-1]:
-                seq.append(each)
-            else:
-            	# 替换掉当前子序列中的较大值,子序列长度不变
-                l, r = 0, len(seq)-1
-                while l <= r:
-                    mid = (l+r)//2
-                    if seq[mid] < each:
-                        l = mid + 1
-                    else:
-                        r = mid - 1
-                seq[l] = each  # seq中大于等于each的最小值 
-        return len(seq)
-```
-
-##### 673. 最长递增子序列的个数
-
-* dp\[i][0]，dp\[i][1]分别计算以i结尾的最长递增子序列的长度和数量。
-
-```python
-class Solution:
-    def findNumberOfLIS(self, nums: List[int]) -> int:
-        n = len(nums)
-        dp = [[1]*2 for _ in range(n)]
-        for j in range(1,n):
-            for i in range(j):
-                if nums[i]<nums[j]:
-                    if dp[i][0] >= dp[j][0]:
-                        dp[j][0] = dp[i][0] + 1
-                        dp[j][1] = dp[i][1]
-                    elif dp[i][0] == dp[j][0]-1:
-                        dp[j][1] += dp[i][1]
-        l = max(each[0] for each in dp)
-        return sum(each[1] for each in dp if each[0]==l)
-```
-
-##### 354. 俄罗斯套娃信封问题	
-
-* 动态规划。排序后转化为最长（高度）递增子序列。
-
-```python
-class Solution:
-    def maxEnvelopes(self, envelopes: List[List[int]]) -> int:
-        n = len(envelopes)
-        # 根据宽度递增，宽度相同时根据高度递减
-        envelopes.sort(key=lambda x: (x[0],-x[1]))
-        dp = [1] * n
-        for i in range(1,n):
-            for j in range(i):
-                if envelopes[j][1]<envelopes[i][1]:
-                    dp[i] = max(dp[i],dp[j]+1)
-        return max(dp)
-```
-
-* 贪心+二分。
-
-```python
-class Solution:
-    def maxEnvelopes(self, envelopes: List[List[int]]) -> int:
-        n = len(envelopes)
-        envelopes.sort(key=lambda x: (x[0],-x[1]))
-        stack = []
-        for _,h in envelopes:
-            if not stack or stack[-1]<h:
-                stack.append(h)
-            else:
-                l, r = 0, len(stack)-1
-                while l <= r:
-                    mid = (l+r)//2
-                    if stack[mid]<h:
-                        l = mid + 1
-                    else:
-                        r = mid - 1
-                stack[l] = h
-        return len(stack)
-```
-
-##### 368. 最大整除子集	
-
-* 先对数组排序，dp[i]记录以nums[i]结尾的最大整除子集。
-
-```python
-class Solution:
-    def largestDivisibleSubset(self, nums: List[int]) -> List[int]:
-        nums.sort()
-        n = len(nums)
-        dp = [[each] for each in nums]
-        for i in range(1,n):
-            for j in range(i-1,-1,-1):
-                if not nums[i]%nums[j]:
-                    dp[i] = max(dp[i],dp[j]+[nums[i]],key=len)
-        return max(dp,key=len)
-```
-
-##### 1671. 得到山形数组的最少删除次数
-
-* 转化为使顶点左右两侧的最长上升子序列长度和最大。
-
-```python
-class Solution:
-    def minimumMountainRemovals(self, nums: List[int]) -> int:
-        n = len(nums)
-        right = [1]*n	
-        cur = [nums[-1]]
-        for i in range(n-2,0,-1):
-            if nums[i] > cur[-1]:
-                cur.append(nums[i])
-            else:
-                cur[bisect.bisect_left(cur,nums[i])] = nums[i]
-            right[i] = len(cur)
-        res = 0
-        cur = [nums[0]]
-        for i in range(1,n-1):
-            if nums[i] > cur[-1]:
-                cur.append(nums[i])
-            else:
-                cur[bisect.bisect_left(cur,nums[i])] = nums[i]
-            if len(cur)>1 and right[i]>1:
-                res = max(res,len(cur)+right[i])
-        return n-res+1	# 最大的情况左右两侧序列共用顶点，所以要+1
-```
-
-##### 1964. 找出到每个位置为止最长的有效障碍赛跑路线
-
-* 同300。
-
-```python
-class Solution:
-    def longestObstacleCourseAtEachPosition(self, obstacles: List[int]) -> List[int]:
-        stack = []
-        res = []
-        for each in obstacles:
-            if not stack or each >= stack[-1]:
-                stack.append(each)
-                res.append(len(stack))
-            else:
-                idx = bisect.bisect(stack,each)
-                stack[idx] = each
-                res.append(idx+1)
+            sums += each
+            res = max(res, sums-mins)
+            mins = min(mins, sums)
         return res
 ```
 
-
-
-***
-**排列组合**
-
-##### 920. 播放列表的数量
-
-* dp\[i][j]表示长度为i且包含j首不同歌曲的播放列表的数量。考虑最后一首歌可以选择播放过的或未播放的。
+* 贪心，当前子序和为负数时，重新计算。
 
 ```python
 class Solution:
-    def numMusicPlaylists(self, n: int, goal: int, k: int) -> int:
-        dp = [[0]*(n+1) for _ in range(goal+1)]
-        dp[0][0] = 1
-        mod = 10**9+7
-        for i in range(1,goal+1):
-            for j in range(1,n+1):
-                dp[i][j] = (dp[i-1][j-1]*(n-j+1)+dp[i-1][j]*max(j-k,0))%mod
-        return dp[-1][-1]
-
-# 空间优化
-class Solution:
-    def numMusicPlaylists(self, n: int, goal: int, k: int) -> int:
-        dp = [0]*(n+1)
-        dp[1] = n
-        mod = 10**9+7
-        for i in range(2,goal+1):
-            for j in range(min(i,n),0,-1):
-                dp[j] = (dp[j-1]*(n-j+1)+dp[j]*max(j-k,0))%mod
-        return dp[-1]
+    def maxSubArray(self, nums: List[int]) -> int:
+        res = nums[0]
+        cur = 0
+        for each in nums:
+            cur = each if cur <= 0 else cur+each
+            res = max(res,cur)
+        return res
 ```
 
-##### 276. 栅栏涂色
+##### 363. 矩形区域不超过k的最大数值和
 
-* dp[i]表示0～i有效涂色的方案数。考虑是否刷与前一个栏杆相同的颜色。
+* 前缀和+二分查找。 插入操作是O(n)，可以优化。
 
 ```python
 class Solution:
-    def numWays(self, n: int, k: int) -> int:
-        if n == 1:
-            return k
-        dp = [0]*n
-        dp[0], dp[1] = k, k*k
-        for i in range(2,n):
-            dp[i] = (dp[i-1] + dp[i-2])*(k-1)
-        return dp[-1]
+    def maxSumSubmatrix(self, matrix: List[List[int]], k: int) -> int:
+        m, n, res = len(matrix), len(matrix[0]), float('-inf')
+        for l in range(n):
+            sums = [0] * m
+            for r in range(l,n):    
+# 选择第l、r列作为矩阵的左右边界，上下边界是0和m-1，由于行数远大于列数所以用列作边界。 
+                for i in range(m):  
+                    sums[i] += matrix[i][r]   # 计算矩形每行的和
+                presum = [0]
+                cur = 0
+                for row in sums:
+                    cur += row     # 计算前缀和
+                    # 二分查找与cur相减后等于k的前缀和
+                    pos = bisect.bisect_left(presum,cur-k)  
+                    if pos < len(presum):
+                        res = max(res,cur-presum[pos])
+                    bisect.insort(presum,cur)	# 保持前缀和有序
+        return res
 ```
 
-##### 940. 不同的子序列 II
+##### 303. 区域和检索-数组不可变
 
-* dp[i]表示s[:i+1]含有的不同子序列的个数。记录是否存在重复的字母及其最后出现的位置。
+##### 304. 二维区域和检索-矩阵不可变
+
+##### 1477. 找两个和为目标值且不重叠的子数组
+
+* dp[i]记录arr[:i+1]中和为target的最短子数组长度，字典记录前缀和帮助查找满足条件的子数组。
 
 ```python
 class Solution:
-    def distinctSubseqII(self, s: str) -> int:
-        dp = [0]*(len(s)+1)
-        memo = {}
-        mod = 10**9+7
-        for i,each in enumerate(s):
-            if each not in memo:
-                dp[i+1] = (2*dp[i]+1)%mod
-            else:
-                dp[i+1] = (2*dp[i]-dp[memo[each]])%mod	# 减去重复的组合
-            memo[each] = i
-        return dp[-1]
+    def minSumOfLengths(self, arr: List[int], target: int) -> int:
+        n = len(arr)
+        dp = [float('inf')] * n
+        prefix = {0:-1}
+        cur = 0
+        res = float('inf')
+        for i in range(n):
+            cur += arr[i]
+            dp[i] = dp[i-1]
+            if cur-target in prefix:
+                idx = prefix[cur-target]
+                dp[i] = min(dp[i],i-idx)
+                # 找到当前子数组前的最短子数组
+                if idx >= 0 and dp[idx] != float('inf'):
+                    res = min(res,dp[idx]+i-idx)
+            prefix[cur] = i
+        return res if res != float('inf') else -1
 ```
 
-***
-**交替和**
+#### 特殊子序列
+
+##### 70. 爬楼梯
+
+##### 746. 使用最小花费爬楼梯
+
+##### 509. 斐波那契数
+
+##### 264. 丑数2
+
+##### 413. 等差数列划分
 
 ##### 198. 打家劫舍
 
@@ -579,6 +192,69 @@ class Solution:
         return max(a,d)
 ```
 
+##### 1911. 最大子序列交替和
+
+* dp\[i][0]和dp\[i][1]分别记录前i个数中长为偶数和奇数的最大子序列交替和。
+
+```python
+class Solution:
+    def maxAlternatingSum(self, nums: List[int]) -> int:
+        n = len(nums)
+        dp = [[0]*2 for _ in range(n+1)]
+        for i in range(1,n+1):
+            dp[i][0] = max(dp[i-1][1]+nums[i-1],dp[i-1][0])
+            dp[i][1] = max(dp[i-1][0]-nums[i-1],dp[i-1][1])
+        return max(dp[-1])
+```
+
+* 贪心
+
+```python
+class Solution:
+    def maxAlternatingSum(self, nums: List[int]) -> int:
+        res = pre = 0
+        for each in nums:
+            if each > pre:
+                res += each - pre
+            pre = each
+        return res
+```
+
+##### 740. 删除与获得点数
+
+#### 最优解问题
+
+##### 279. 完全平方数
+
+##### 646. 最长数对链
+
+##### 650. 只有两个键的键盘
+
+##### 801. 使序列递增的最小交换次数
+
+##### 813. 最大平均值和的分组
+
+##### 1262. 可被三整除的最大和
+
+##### 1537. 最大得分
+
+##### 368. 最大整除子集	
+
+* 先对数组排序，dp[i]记录以nums[i]结尾的最大整除子集。
+
+```python
+class Solution:
+    def largestDivisibleSubset(self, nums: List[int]) -> List[int]:
+        nums.sort()
+        n = len(nums)
+        dp = [[each] for each in nums]
+        for i in range(1,n):
+            for j in range(i-1,-1,-1):
+                if not nums[i]%nums[j]:
+                    dp[i] = max(dp[i],dp[j]+[nums[i]],key=len)
+        return max(dp,key=len)
+```
+
 ##### 256. 粉刷房子
 
 * costs\[i][j]记录把房子i刷成j色的最小花费。
@@ -592,6 +268,11 @@ class Solution:
             costs[i][2] += min(costs[i-1][0],costs[i-1][1])
         return min(costs[-1])
 ```
+
+##### 265. 粉刷房子2
+
+##### 1473. 粉刷房子3
+
 ##### 121. 买卖股票的最佳时机
 
 * dp[i]表示第i天卖出股票获得的最大收入。
@@ -767,112 +448,667 @@ class Solution:
         return sell
 ```
 
-##### 1911. 最大子序列交替和
+##### 983. 最低票价
 
-* dp\[i][0]和dp\[i][1]分别记录前i个数中长为偶数和奇数的最大子序列交替和。
+* dp[i]表示1～i天内旅行的最小花费。
 
 ```python
 class Solution:
-    def maxAlternatingSum(self, nums: List[int]) -> int:
-        n = len(nums)
-        dp = [[0]*2 for _ in range(n+1)]
-        for i in range(1,n+1):
-            dp[i][0] = max(dp[i-1][1]+nums[i-1],dp[i-1][0])
-            dp[i][1] = max(dp[i-1][0]-nums[i-1],dp[i-1][1])
-        return max(dp[-1])
+    def mincostTickets(self, days: List[int], costs: List[int]) -> int:
+        dp = [0]*(days[-1]+1)
+        for i in range(1,days[-1]+1):
+            if i in days:
+                dp[i] = min(dp[i-1]+costs[0],dp[max(i-7,0)]+costs[1],dp[max(i-30,0)]+costs[2])
+            else:
+                dp[i] = dp[i-1]
+        return dp[-1]
 ```
 
-* 贪心
+##### 1105. 填充书架
+
+* dp[i]表示放置book[i]需要的书架最小高度。
 
 ```python
 class Solution:
-    def maxAlternatingSum(self, nums: List[int]) -> int:
-        res = pre = 0
-        for each in nums:
-            if each > pre:
-                res += each - pre
-            pre = each
+    def minHeightShelves(self, books: List[List[int]], shelfWidth: int) -> int:
+        n = len(books)
+        dp = [0]+[float('inf')]*n
+        for i in range(1,n+1):
+            w, h = books[i-1]
+            dp[i] = dp[i-1]+h
+            # 判断第i本书能否和之前的书放到一层
+            for j in range(i-1,0,-1):
+                w += books[j-1][0]
+                if w > shelfWidth:
+                    break
+                h = max(h,books[j-1][1])
+                dp[i] = min(dp[i],dp[j-1]+h)
+        return dp[-1]
+```
+
+##### 1235. 规划兼职工作
+
+##### 1335. 工作计划的最低难度
+
+##### 1187. 使数组严格递增
+
+##### 514. 自由之路
+
+##### 887. 鸡蛋掉落
+
+> 鸡蛋越多操作数才可能减少，要不然只能逐层尝试。分类讨论从每层扔下鸡蛋摔碎或完好的情况，因为要考虑最坏情况，所以需要选择合适的楼层使两种情况的最大值最小。
+
+* 动态规划+二分法。dp\[i][j]表示i层楼j个鸡蛋的在最坏情况下的最小操作次数。O(knlogn)
+
+  * 不使用第j个鸡蛋：$dp[i][j-1]$
+
+  * 使用第j个鸡蛋，在第x层扔下，选择二者中的较大值也就是最坏情况：
+
+    * 蛋碎，搜索空间变成1~x-1，$dp[x-1][j-1]$
+    * 未碎，搜索空间变成x+1~i，$dp[i-x][j]$
+
+    枚举楼层x，找到最小的操作次数后加1。
+
+    * 为了加快找到最合适x的速度，采用二分法。上面两种情况的操作数分别随x单调递增和单调递减，当蛋碎和未碎的操作数接近时，二者的最大值最小。由于其是离散函数，当不存在刚好相等的数据点时，需要比较交点左右两点的操作数。
+
+```python
+# 自底向上，速度过慢，计算了无用的子问题。
+class Solution:
+    def superEggDrop(self, k: int, n: int) -> int:
+        dp = [[0]*(k+1) for _ in range(n+1)]
+        for i in range(1,n+1):
+            dp[i][1] = i
+        for j in range(1,k+1):
+            dp[1][j] = 1
+        for i in range(2,n+1):
+            lim = min(int(math.log(i,2))+1,k)   # 排除鸡蛋过多的情况
+            for j in range(2,k+1):
+                dp[i][j] = dp[i][j-1]
+                if j > lim:
+                    continue
+                l, r = 1, i
+                while l <= r:
+                    mid = (l+r)//2
+                    if dp[mid-1][j-1]<dp[i-mid][j]:
+                    # 蛋碎大于等于未碎的最小x，x-1即为未碎大于等于蛋碎的最大x
+                        l = mid + 1             
+                    elif dp[mid-1][j-1]>dp[i-mid][j]:
+                        r = mid - 1
+                    else:
+                        l = mid
+                        break
+                dp[i][j] = min(dp[l-1][j-1]+1,dp[i-l+1][j]+1)   
+                '''
+                枚举x   超时
+                for x in range(1,i+1):
+                    dp[i][j] = min(dp[i][j],max(dp[x-1][j-1],dp[i-x][j])+1)
+                '''
+        return dp[-1][-1]
+```
+
+```python
+# 自顶向下
+class Solution:
+    def superEggDrop(self, k: int, n: int) -> int:
+        def recur(k,n):
+            if (k,n) not in memo:
+                if k == 1 or n<=2:
+                    return n
+                lim = int(math.log(n,2))+1
+                if k >= lim:
+                    return lim	# 鸡蛋充足，直接二分查找。
+                l, r = 1, n
+                while l <= r:	
+                    mid = (l+r) // 2
+                    t1, t2 = recur(k-1,mid-1),recur(k,n-mid)
+                    if t1 < t2:
+                        l = mid + 1
+                    elif t1 > t2:
+                        r = mid - 1
+                    else:
+                        l = mid 
+                        break
+                memo[(k,n)] = 1 + min(recur(k-1,l-1),recur(k,n-l+1))
+            return memo[(k,n)]
+        memo = {}
+        return recur(k,n)
+```
+
+* 另一种状态描述，dp\[t][k]表示给定k枚鸡蛋和t次操作能检测的建筑高度，找到使dp\[t][k]>=n的最小t。O(kn)
+  * dp\[t][k] = 1 + dp\[t-1][k-1] + dp\[t-1][k] ，考虑多出的一个鸡蛋摔碎和未摔碎两种情况，能测的最大高度即为上下两部分高度加上测试层。
+
+```python
+class Solution:
+    def superEggDrop(self, k: int, n: int) -> int:
+        if k== 1 or n <= 2:
+            return n
+        dp = [0] * (k+1)				# 空间优化
+        for i in range(1,n+1):			# 逐渐增加操作次数，最多操作n次
+            for j in range(k,0,-1):
+                dp[j] += 1 + dp[j-1]
+            if dp[k] >= n:
+                return i
+```
+
+#### 回文子序列
+
+##### 516. 最长回文子序列
+
+* dp\[i][j]表示i~j的最长子序列长度。注意遍历的顺序，提前计算所需的状态。
+
+```python
+class Solution:
+    def longestPalindromeSubseq(self, s: str) -> int:
+        n = len(s)
+        dp = [[1]*n for _ in range(n)]
+        for j in range(1,n):
+            for i in range(j-1,-1,-1):
+                if s[i] == s[j]:
+                    dp[i][j] = (dp[i+1][j-1] if i+1<j else 0) + 2
+                else:
+                    dp[i][j] = max(dp[i+1][j],dp[i][j-1])
+        return dp[0][-1]
+```
+
+##### 5. 最长回文子串
+
+* dp\[i][j]表示字符串是否是回文子串。
+
+```python
+class Solution:
+    def longestPalindrome(self, s: str) -> str:
+        n = len(s)
+        dp = [[False]*n for _ in range(n)]
+        res = s[0]
+        for j in range(n):
+            dp[j][j] = True
+            for i in range(j-1,-1,-1):
+                if s[i] == s[j]:
+                    dp[i][j] = dp[i+1][j-1] if i+1<j else True
+                    if dp[i][j] and j-i+1 > len(res):
+                        res = s[i:j+1]
         return res
 ```
 
-***
+##### 131. 分割回文串
 
-**子段和**
-
-##### 53. 最大子序和
-
-* dp[i]表示以i结尾的最大子序和。
+* dp记录所有的回文子串，然后利用回溯法枚举所有分割方式。
 
 ```python
 class Solution:
-    def maxSubArray(self, nums: List[int]) -> int:
+    def partition(self, s: str) -> List[List[str]]:
+        def dfs(i,cur):
+            if i == n:
+                res.append(cur)
+                return 
+            for j in range(i,n):
+                if dp[i][j]:
+                    dfs(j+1,cur+[s[i:j+1]])
+
+        n = len(s)
+        dp = [[False]*n for _ in range(n)]
+        for j in range(n):
+            dp[j][j] = True
+            for i in range(j-1,-1,-1):
+                if s[i] == s[j]:
+                    dp[i][j] = dp[i+1][j-1] if i+1<j else True
+        res = []
+        dfs(0,[])
+        return res
+```
+
+##### 132. 分割回文串 II
+
+* dp[i]表示s[0:i+1]的最小分割次数。
+
+```python
+class Solution:
+    def minCut(self, s: str) -> int:
+        n = len(s)
+        dp = list(range(n))
+        for j in range(1,n):  
+            if s[:j+1] == s[:j+1][::-1]:
+                dp[j] = 0
+                continue
+            for i in range(j,0,-1):
+                if s[i:j+1]==s[i:j+1][::-1]:
+                    dp[j] = min(dp[j],dp[i-1]+1)     
+        return dp[-1]
+```
+
+* 同时记录回文串情况和分割次数。
+
+```python
+class Solution:
+    def minCut(self, s: str) -> int:
+        n = len(s)
+        p = [[False]*n for _ in range(n)]
+        dp = list(range(n))
+        for j in range(1,n):
+            p[j][j] = True
+            dp[j] = dp[j-1]+1
+            for i in range(j-1,-1,-1):
+                if s[i]==s[j]:
+                    p[i][j] = p[i+1][j-1] if i+1<j else True
+                    if p[i][j]:
+                        dp[j] = min(dp[j],dp[i-1]+1) if i else 0
+        return dp[-1]
+```
+
+* 记忆化递归。
+
+```python
+class Solution:
+    @functools.lru_cache(None)
+    def minCut(self, s: str) -> int:
+        if s == s[::-1]:
+            return 0
+        ans = float("inf")
+        for i in range(1, len(s) + 1):
+            if s[:i] == s[:i][::-1]:
+                ans = min(self.minCut(s[i:]) + 1, ans)
+        return ans
+```
+
+##### 647. 回文子串
+
+##### 730. 统计不同回文子串
+
+##### 1312. 让字符串成为回文串的最少插入次数
+
+#### 最长递增子序列
+
+##### 300. 最长递增子序列   LIS
+
+* 动态规划。dp[i]表示以nums[i]结尾的最长递增子序列的长度。dp[i]既代表以i结尾的状态，同时也是子问题求解的一个阶段。O(n^2)
+
+```python
+class Solution:
+    def lengthOfLIS(self, nums: List[int]) -> int:
         n = len(nums)
-        dp = [0] * n
-        for i in range(n):
-            dp[i] = max(nums[i],nums[i]+dp[i-1])
+        dp = [1]*n
+        for i in range(1,n):
+            for j in range(i):
+                if nums[i] > nums[j]:
+                    dp[i] = max(dp[i],dp[j]+1)
         return max(dp)
 ```
 
-* 前缀和
+* 贪心+二分。单调栈保存现在发现的上升子序列，为了使子序列尽可能的长，需要寻找尽可能小的值放到序列末尾。O(nlogn)
 
 ```python
 class Solution(object):
-    def maxSubArray(self, nums):
-        sums = mins = 0
-        res = float('-inf')
+    def lengthOfLIS(self, nums):
+        seq = []
         for each in nums:
-            sums += each
-            res = max(res, sums-mins)
-            mins = min(mins, sums)
-        return res
+            if not seq or each > seq[-1]:
+                seq.append(each)
+            else:
+            	# 替换掉当前子序列中的较大值,子序列长度不变
+                l, r = 0, len(seq)-1
+                while l <= r:
+                    mid = (l+r)//2
+                    if seq[mid] < each:
+                        l = mid + 1
+                    else:
+                        r = mid - 1
+                seq[l] = each  # seq中大于等于each的最小值 
+        return len(seq)
 ```
 
-* 贪心，当前子序和为负数时，重新计算。
+##### 673. 最长递增子序列的个数
+
+* dp\[i][0]，dp\[i][1]分别计算以i结尾的最长递增子序列的长度和数量。
 
 ```python
 class Solution:
-    def maxSubArray(self, nums: List[int]) -> int:
-        res = nums[0]
-        cur = 0
-        for each in nums:
-            cur = each if cur <= 0 else cur+each
-            res = max(res,cur)
-        return res
+    def findNumberOfLIS(self, nums: List[int]) -> int:
+        n = len(nums)
+        dp = [[1]*2 for _ in range(n)]
+        for j in range(1,n):
+            for i in range(j):
+                if nums[i]<nums[j]:
+                    if dp[i][0] >= dp[j][0]:
+                        dp[j][0] = dp[i][0] + 1
+                        dp[j][1] = dp[i][1]
+                    elif dp[i][0] == dp[j][0]-1:
+                        dp[j][1] += dp[i][1]
+        l = max(each[0] for each in dp)
+        return sum(each[1] for each in dp if each[0]==l)
 ```
 
-##### 363. 矩形区域不超过k的最大数值和
+##### 1218. 最长定差子序列
 
-* 前缀和+二分查找。 插入操作是O(n)，可以优化。
+##### 354. 俄罗斯套娃信封问题	
+
+* 动态规划。排序后转化为最长（高度）递增子序列。
 
 ```python
 class Solution:
-    def maxSumSubmatrix(self, matrix: List[List[int]], k: int) -> int:
-        m, n, res = len(matrix), len(matrix[0]), float('-inf')
-        for l in range(n):
-            sums = [0] * m
-            for r in range(l,n):    
-# 选择第l、r列作为矩阵的左右边界，上下边界是0和m-1，由于行数远大于列数所以用列作边界。 
-                for i in range(m):  
-                    sums[i] += matrix[i][r]   # 计算矩形每行的和
-                presum = [0]
-                cur = 0
-                for row in sums:
-                    cur += row     # 计算前缀和
-                    # 二分查找与cur相减后等于k的前缀和
-                    pos = bisect.bisect_left(presum,cur-k)  
-                    if pos < len(presum):
-                        res = max(res,cur-presum[pos])
-                    bisect.insort(presum,cur)	# 保持前缀和有序
+    def maxEnvelopes(self, envelopes: List[List[int]]) -> int:
+        n = len(envelopes)
+        # 根据宽度递增，宽度相同时根据高度递减
+        envelopes.sort(key=lambda x: (x[0],-x[1]))
+        dp = [1] * n
+        for i in range(1,n):
+            for j in range(i):
+                if envelopes[j][1]<envelopes[i][1]:
+                    dp[i] = max(dp[i],dp[j]+1)
+        return max(dp)
+```
+
+* 贪心+二分。
+
+```python
+class Solution:
+    def maxEnvelopes(self, envelopes: List[List[int]]) -> int:
+        n = len(envelopes)
+        envelopes.sort(key=lambda x: (x[0],-x[1]))
+        stack = []
+        for _,h in envelopes:
+            if not stack or stack[-1]<h:
+                stack.append(h)
+            else:
+                l, r = 0, len(stack)-1
+                while l <= r:
+                    mid = (l+r)//2
+                    if stack[mid]<h:
+                        l = mid + 1
+                    else:
+                        r = mid - 1
+                stack[l] = h
+        return len(stack)
+```
+
+##### 1671. 得到山形数组的最少删除次数
+
+* 转化为使顶点左右两侧的最长上升子序列长度和最大。
+
+```python
+class Solution:
+    def minimumMountainRemovals(self, nums: List[int]) -> int:
+        n = len(nums)
+        right = [1]*n	
+        cur = [nums[-1]]
+        for i in range(n-2,0,-1):
+            if nums[i] > cur[-1]:
+                cur.append(nums[i])
+            else:
+                cur[bisect.bisect_left(cur,nums[i])] = nums[i]
+            right[i] = len(cur)
+        res = 0
+        cur = [nums[0]]
+        for i in range(1,n-1):
+            if nums[i] > cur[-1]:
+                cur.append(nums[i])
+            else:
+                cur[bisect.bisect_left(cur,nums[i])] = nums[i]
+            if len(cur)>1 and right[i]>1:
+                res = max(res,len(cur)+right[i])
+        return n-res+1	# 最大的情况左右两侧序列共用顶点，所以要+1
+```
+
+##### 1964. 找出到每个位置为止最长的有效障碍赛跑路线
+
+* 同300。
+
+```python
+class Solution:
+    def longestObstacleCourseAtEachPosition(self, obstacles: List[int]) -> List[int]:
+        stack = []
+        res = []
+        for each in obstacles:
+            if not stack or each >= stack[-1]:
+                stack.append(each)
+                res.append(len(stack))
+            else:
+                idx = bisect.bisect(stack,each)
+                stack[idx] = each
+                res.append(idx+1)
         return res
 ```
 
+##### 1626. 无矛盾的最佳球队
 
+##### 5959. 使数组k递增的最少操作次数
+
+* 将原数组划分成k个子数组，只要找到这个数组中最长的递增子序列，然后用总长度减去该子序列长度就是需要调整的元素个数。
+
+```python
+class Solution:
+    def kIncreasing(self, arr: List[int], k: int) -> int:
+        def lis(nums):
+            stack = []
+            for each in nums:
+                if not stack or each >= stack[-1]:
+                    stack.append(each)
+                else:
+                    l, r = 0, len(stack)-1
+                    while l <= r:
+                        mid = (l+r)//2
+                        if stack[mid] <= each:
+                            l = mid+1
+                        else:
+                            r = mid-1
+                    stack[l] = each
+            return len(nums) - len(stack)
+
+        n = len(arr)
+        res = 0
+        for i in range(k):
+            res += lis(arr[i:n:k])
+        return res
+```
+
+#### 子数组
+
+##### 152. 乘积最大子数组
+
+* dp[i]记录以i结尾的子数组乘积最大值和最小值。
+
+```python
+class Solution:
+    def maxProduct(self, nums: List[int]) -> int:
+        n = len(nums)
+        dp = [[nums[i]]*2 for i in range(n)]
+        for i in range(1,n):
+            if nums[i] >= 0:
+                dp[i][0] = max(nums[i],dp[i-1][0]*nums[i])
+                dp[i][1] = min(nums[i],dp[i-1][1]*nums[i])
+            else:
+                dp[i][0] = max(nums[i],dp[i-1][1]*nums[i])
+                dp[i][1] = min(nums[i],dp[i-1][0]*nums[i])
+        return max(dp[i][0] for i in range(n))
+    
+# 优化空间
+class Solution:
+    def maxProduct(self, nums: List[int]) -> int:
+        min_ = max_ = res = nums[0]
+        for i in range(1,len(nums)):
+            if nums[i] >=0:
+                max_, min_ = max(max_*nums[i],nums[i]),min(min_*nums[i],nums[i])
+            else:
+                max_, min_ = max(min_*nums[i],nums[i]),min(max_*nums[i],nums[i])
+            res = max(res,max_)
+        return res
+```
+
+##### 1186. 删除一次得到子数组的最大和
+
+* dp\[i][0]记录以i结尾的最大子序和，dp\[i][1]记录从以i结尾的子序列中删除一个后得到的最大和。
+
+```python
+class Solution:
+    def maximumSum(self, arr: List[int]) -> int:
+        n = len(arr)
+        dp = [[0]*2 for _ in range(n)]
+        dp[0][0] = res = arr[0]
+        for i in range(1,n):
+            dp[i][0] = max(dp[i-1][0]+arr[i],arr[i])
+            dp[i][1] = max(dp[i-1][0],dp[i-1][1]+arr[i])
+            res = max(res,dp[i][0],dp[i][1])	# 删除或不删除
+        return res
+```
+
+##### 523. 连续的子数组和
+
+##### 674. 最长连续递增子序列
+
+##### 718. 最长重复子数组
+
+#### 树塔
+
+##### 120. 三角形最小路径和
+
+* dp\[i][j]表示走到第i行第j列的最小路径和。
+
+```python
+class Solution:
+    def minimumTotal(self, triangle: List[List[int]]) -> int:
+        n = len(triangle)
+        dp = [0]+[float('inf')] * n
+        for i in range(n):
+            for j in range(i,-1,-1):
+                dp[j] = min(dp[j],dp[j-1])+triangle[i][j]
+        return min(dp)
+```
+
+##### 118. 杨辉三角
+
+##### 931. 下降路径最小和
+
+##### 1289. 下降路径最小和2
+
+##### 1301. 最大得分的路径数目
+
+#### 排列组合
+
+##### 698. 划分为k个相等的子集
+
+##### 487. 最大连续1的个数 II
+
+*  dp\[i][0]为以 i 为结尾未使用操作的最大的连续 1 的个数，dp\[i][1]为以 i为结尾使用操作将 [0,i]某个 0 变成 1 的最大的连续 1 的个数。
+
+
+```python
+class Solution:
+    def findMaxConsecutiveOnes(self, nums: List[int]) -> int:
+        n = len(nums)
+        dp = [[0]*2 for _ in range(n)]
+        res = 0
+        for i in range(n):
+            if nums[i]:
+                dp[i][0] = dp[i-1][0] + 1
+                dp[i][1] = dp[i-1][1] + 1
+            else:
+                dp[i][1] = dp[i-1][0] + 1
+            res = max(res,dp[i][0],dp[i][1])
+        return res
+```
+
+* 滑动窗口，维护一个0数量小于2的窗口。
+
+```python
+class Solution:
+    def findMaxConsecutiveOnes(self, nums: List[int]) -> int:
+        i = res = flag = 0
+        for j in range(len(nums)):
+            if not nums[j]:
+                flag += 1
+            while flag > 1:
+                if not nums[i]:
+                    flag -= 1
+                i += 1
+            res = max(res, j-i+1)
+        return res
+    
+# 处理数据流，队列记录0的位置
+class Solution:
+    def findMaxConsecutiveOnes(self, nums: List[int]) -> int:
+        i = res = cnt = 0
+        q = deque([])
+        for j in range(len(nums)):
+            if not nums[j]:
+                q.append(j)
+                cnt += 1
+            while cnt > 1:
+                i = q.popleft()+1
+                cnt -= 1
+            res = max(res, j-i+1)
+        return res
+```
+
+##### 920. 播放列表的数量
+
+* dp\[i][j]表示长度为i且包含j首不同歌曲的播放列表的数量。考虑最后一首歌可以选择播放过的或未播放的。
+
+```python
+class Solution:
+    def numMusicPlaylists(self, n: int, goal: int, k: int) -> int:
+        dp = [[0]*(n+1) for _ in range(goal+1)]
+        dp[0][0] = 1
+        mod = 10**9+7
+        for i in range(1,goal+1):
+            for j in range(1,n+1):
+                dp[i][j] = (dp[i-1][j-1]*(n-j+1)+dp[i-1][j]*max(j-k,0))%mod
+        return dp[-1][-1]
+
+# 空间优化
+class Solution:
+    def numMusicPlaylists(self, n: int, goal: int, k: int) -> int:
+        dp = [0]*(n+1)
+        dp[1] = n
+        mod = 10**9+7
+        for i in range(2,goal+1):
+            for j in range(min(i,n),0,-1):
+                dp[j] = (dp[j-1]*(n-j+1)+dp[j]*max(j-k,0))%mod
+        return dp[-1]
+```
+
+##### 276. 栅栏涂色
+
+* dp[i]表示0～i有效涂色的方案数。考虑是否刷与前一个栏杆相同的颜色。
+
+```python
+class Solution:
+    def numWays(self, n: int, k: int) -> int:
+        if n == 1:
+            return k
+        dp = [0]*n
+        dp[0], dp[1] = k, k*k
+        for i in range(2,n):
+            dp[i] = (dp[i-1] + dp[i-2])*(k-1)
+        return dp[-1]
+```
+
+##### 940. 不同的子序列 II
+
+* dp[i]表示s[:i+1]含有的不同子序列的个数。记录是否存在重复的字母及其最后出现的位置。
+
+```python
+class Solution:
+    def distinctSubseqII(self, s: str) -> int:
+        dp = [0]*(len(s)+1)
+        memo = {}
+        mod = 10**9+7
+        for i,each in enumerate(s):
+            if each not in memo:
+                dp[i+1] = (2*dp[i]+1)%mod
+            else:
+                dp[i+1] = (2*dp[i]-dp[memo[each]])%mod	# 减去重复的组合
+            memo[each] = i
+        return dp[-1]
+```
 
 #### 双序列
 
 一般是二维DP分别表示在两个序列中的位置。
 
 ***
+
+##### 14. 最长公共前缀
+
+##### 392. 判断子序列
 
 ##### 1143. 最长公共子序列	LCS
 
@@ -891,6 +1127,10 @@ class Solution:
                     dp[i][j] = max(dp[i-1][j],dp[i][j-1])
         return dp[-1][-1]
 ```
+
+##### 1035. 不相交的线
+
+##### 1458. 两个子序列的最大点积
 
 ##### 1092. 最短公共超序列
 
@@ -1069,6 +1309,8 @@ class Solution:
         return dp[-1][-1]
 ```
 
+##### 712. 两个字符串的最小ASC II删除和
+
 ##### 1216. 验证回文字符串 III
 
 * 转化为LCS。计算s和s[::-1]的最长公共子序列。
@@ -1088,11 +1330,15 @@ class Solution:
         return n-dp[-1][-1]<=k
 ```
 
-#### 其它
+##### 467. 环绕字符串中唯一的子字符串
 
-较为复杂的状态划分和转移方式。
+##### 678. 有效的括号字符串
 
-***
+##### 639. 解码方法2
+
+##### 1320. 二指输入的最小距离
+
+#### 博弈
 
 ##### 375. 猜数字大小 II
 
@@ -1108,141 +1354,27 @@ class Solution:
         return dp[1][n]
 ```
 
-##### 887. 鸡蛋掉落
+##### 292. Nim游戏
 
-> 鸡蛋越多操作数才可能减少，要不然只能逐层尝试。分类讨论从每层扔下鸡蛋摔碎或完好的情况，因为要考虑最坏情况，所以需要选择合适的楼层使两种情况的最大值最小。
+##### 1025. 除数博弈
 
-* 动态规划+二分法。dp\[i][j]表示i层楼j个鸡蛋的在最坏情况下的最小操作次数。O(knlogn)
+##### 464. 我能赢吗
 
-  * 不使用第j个鸡蛋：$dp[i][j-1]$
+##### 486. 预测赢家
 
-  * 使用第j个鸡蛋，在第x层扔下，选择二者中的较大值也就是最坏情况：
+##### 877. 石子游戏
 
-    * 蛋碎，搜索空间变成1~x-1，$dp[x-1][j-1]$
-    * 未碎，搜索空间变成x+1~i，$dp[i-x][j]$
+##### 1140. 石子游戏2
 
-    枚举楼层x，找到最小的操作次数后加1。
+##### 1406. 石子游戏3
 
-    * 为了加快找到最合适x的速度，采用二分法。上面两种情况的操作数分别随x单调递增和单调递减，当蛋碎和未碎的操作数接近时，二者的最大值最小。由于其是离散函数，当不存在刚好相等的数据点时，需要比较交点左右两点的操作数。
+##### 1510. 石子游戏4
 
-```python
-# 自底向上，速度过慢，计算了无用的子问题。
-class Solution:
-    def superEggDrop(self, k: int, n: int) -> int:
-        dp = [[0]*(k+1) for _ in range(n+1)]
-        for i in range(1,n+1):
-            dp[i][1] = i
-        for j in range(1,k+1):
-            dp[1][j] = 1
-        for i in range(2,n+1):
-            lim = min(int(math.log(i,2))+1,k)   # 排除鸡蛋过多的情况
-            for j in range(2,k+1):
-                dp[i][j] = dp[i][j-1]
-                if j > lim:
-                    continue
-                l, r = 1, i
-                while l <= r:
-                    mid = (l+r)//2
-                    if dp[mid-1][j-1]<dp[i-mid][j]:
-                    # 蛋碎大于等于未碎的最小x，x-1即为未碎大于等于蛋碎的最大x
-                        l = mid + 1             
-                    elif dp[mid-1][j-1]>dp[i-mid][j]:
-                        r = mid - 1
-                    else:
-                        l = mid
-                        break
-                dp[i][j] = min(dp[l-1][j-1]+1,dp[i-l+1][j]+1)   
-                '''
-                枚举x   超时
-                for x in range(1,i+1):
-                    dp[i][j] = min(dp[i][j],max(dp[x-1][j-1],dp[i-x][j])+1)
-                '''
-        return dp[-1][-1]
-```
+#### 其它
 
-```python
-# 自顶向下
-class Solution:
-    def superEggDrop(self, k: int, n: int) -> int:
-        def recur(k,n):
-            if (k,n) not in memo:
-                if k == 1 or n<=2:
-                    return n
-                lim = int(math.log(n,2))+1
-                if k >= lim:
-                    return lim	# 鸡蛋充足，直接二分查找。
-                l, r = 1, n
-                while l <= r:	
-                    mid = (l+r) // 2
-                    t1, t2 = recur(k-1,mid-1),recur(k,n-mid)
-                    if t1 < t2:
-                        l = mid + 1
-                    elif t1 > t2:
-                        r = mid - 1
-                    else:
-                        l = mid 
-                        break
-                memo[(k,n)] = 1 + min(recur(k-1,l-1),recur(k,n-l+1))
-            return memo[(k,n)]
-        memo = {}
-        return recur(k,n)
-```
+##### 32. 最长有效括号
 
-* 另一种状态描述，dp\[t][k]表示给定k枚鸡蛋和t次操作能检测的建筑高度，找到使dp\[t][k]>=n的最小t。O(kn)
-  * dp\[t][k] = 1 + dp\[t-1][k-1] + dp\[t-1][k] ，考虑多出的一个鸡蛋摔碎和未摔碎两种情况，能测的最大高度即为上下两部分高度加上测试层。
-
-```python
-class Solution:
-    def superEggDrop(self, k: int, n: int) -> int:
-        if k== 1 or n <= 2:
-            return n
-        dp = [0] * (k+1)				# 空间优化
-        for i in range(1,n+1):			# 逐渐增加操作次数，最多操作n次
-            for j in range(k,0,-1):
-                dp[j] += 1 + dp[j-1]
-            if dp[k] >= n:
-                return i
-```
-
-##### 956. 最高的广告牌
-
-* dp{i:j}记录钢筋的第一根钢筋和第二根钢筋的差值i和第一根钢筋的高度j，希望在相同的高度差下，第一根钢筋尽可能高。
-
-```python
-class Solution:
-    def tallestBillboard(self, rods: List[int]) -> int:
-        dp = {0:0}							# 用字典存储状态
-        for each in rods:
-            for k,v in list(dp.items()):	# 注意是未更新前的字典值
-                dp[k+each] = max(dp.get(k+each,0),v+each)
-                dp[k-each] = max(dp.get(k-each,0),v)
-        return dp[0]
-```
-
-##### 1477. 找两个和为目标值且不重叠的子数组
-
-* dp[i]记录arr[:i+1]中和为target的最短子数组长度，字典记录前缀和帮助查找满足条件的子数组。
-
-```python
-class Solution:
-    def minSumOfLengths(self, arr: List[int], target: int) -> int:
-        n = len(arr)
-        dp = [float('inf')] * n
-        prefix = {0:-1}
-        cur = 0
-        res = float('inf')
-        for i in range(n):
-            cur += arr[i]
-            dp[i] = dp[i-1]
-            if cur-target in prefix:
-                idx = prefix[cur-target]
-                dp[i] = min(dp[i],i-idx)
-                # 找到当前子数组前的最短子数组
-                if idx >= 0 and dp[idx] != float('inf'):
-                    res = min(res,dp[idx]+i-idx)
-            prefix[cur] = i
-        return res if res != float('inf') else -1
-```
+##### 943. 最短超级串
 
 ##### 1531. 压缩字符串 II
 
@@ -1270,44 +1402,6 @@ class Solution:
                     else:
                         dp[i][j] = min(dp[p-1][j-cnt]+compress(i-p+1-cnt),dp[i][j])
         return dp[-1][-1]
-```
-
-##### 1105. 填充书架
-
-* dp[i]表示放置book[i]需要的书架最小高度。
-
-```python
-class Solution:
-    def minHeightShelves(self, books: List[List[int]], shelfWidth: int) -> int:
-        n = len(books)
-        dp = [0]+[float('inf')]*n
-        for i in range(1,n+1):
-            w, h = books[i-1]
-            dp[i] = dp[i-1]+h
-            # 判断第i本书能否和之前的书放到一层
-            for j in range(i-1,0,-1):
-                w += books[j-1][0]
-                if w > shelfWidth:
-                    break
-                h = max(h,books[j-1][1])
-                dp[i] = min(dp[i],dp[j-1]+h)
-        return dp[-1]
-```
-
-##### 983. 最低票价
-
-* dp[i]表示1～i天内旅行的最小花费。
-
-```python
-class Solution:
-    def mincostTickets(self, days: List[int], costs: List[int]) -> int:
-        dp = [0]*(days[-1]+1)
-        for i in range(1,days[-1]+1):
-            if i in days:
-                dp[i] = min(dp[i-1]+costs[0],dp[max(i-7,0)]+costs[1],dp[max(i-30,0)]+costs[2])
-            else:
-                dp[i] = dp[i-1]
-        return dp[-1]
 ```
 
 ##### 741. 摘樱桃
@@ -1515,11 +1609,35 @@ if __name__=='__main__':
 
 ### 背包
 
+背包问题属于线性DP中一类特殊的模型。
+
 #### 01背包
+
+> 有$n$个物品和一个容量为$W$的背包，每个物品有重量$w_i$和价值$v_i$两种属性，要求选若干物品放入背包使背包中物品的总价值最大且背包中物品的总重量不超过背包的容量。
+
+将“已处理的物品数”作为DP的“阶段”，以“背包中已经放入的重量”作为附加维度。dp\[i][j]表示**只能放前 i个物品的情况下，容量为j的背包所能达到的最大总价值**，根据**是否选择第i个物品(0或1)**划分子问题：
+$$
+dp[i][j] = max\left\{\begin{matrix}dp[i-1][j]\\dp[i-1][j-w_i]+v_i \end{matrix}\right.
+$$
+每一阶段i的状态只与上一阶段i-1的状态有关，采用滚动数组的形式优化内存:
+$$
+dp[i] = max(dp[j],dp[j-w_i]+v_i)
+$$
+注意在枚举的过程中需要**逆序**进行，因为第j项需要利用到j-w项更新前的值。
+
+```python
+for i in range(n):
+    for j in range(W,wi-1,-1):
+        dp[j] = max(dp[j],dp[j-w[i]]+v[i])
+res = max(dp)
+```
+
+* 该类型的核心是单个物品的取舍，目标不一定是求最值。
+* 不是刚好放置i个物品，价值达到j，而是处于这个区间内。
 
 ##### 416. 分割等和子集
 
-* dp[i]表示能否得到元素和为i。
+* 是否能使总价值刚好为该值，dp[i]表示能否得到元素和为i。
 
 ```python
 class Solution:
@@ -1533,6 +1651,135 @@ class Solution:
             for i in range(t,each-1,-1):
                 dp[i] |= dp[i-each]
         return dp[-1] 
+```
+
+##### 494. 目标和
+
+* 求方案数。x+y=sum, x-y=target，从而推出背包中需要装入的数字和。
+
+```python
+class Solution:
+    def findTargetSumWays(self, nums: List[int], target: int) -> int:
+        t = target+sum(nums)
+        if t<0 or t%2:
+            return 0
+        t //= 2
+        dp = [1]+[0]*t
+        for each in nums:
+            for i in range(t,each-1,-1):
+                dp[i] += dp[i-each]
+        return dp[-1]
+```
+
+##### 1049. 最后一块石头的重量 II
+
+* 重量同时也是价值，背包容量为1/2总重量，求最大重量。dp[i]表示能否容纳重量为i的石头。
+
+```python
+class Solution:
+    def lastStoneWeightII(self, stones: List[int]) -> int:
+        t = sum(stones)//2
+        dp = [True]+[False]*t
+        for each in stones:
+            for i in range(t,each-1,-1):
+                dp[i] |= dp[i-each]
+        for i in range(t,-1,-1):
+            if dp[i]:
+                return sum(stones)-2*i
+```
+
+##### 956. 最高的广告牌
+
+* 将两根钢筋的差值作为“背包”中物品的价值，但背包容量不限。dp{i:j}记录钢筋的第一根钢筋和第二根钢筋的差值i和第一根钢筋的高度j，希望在相同的高度差下，第一根钢筋尽可能高。
+
+```python
+class Solution:
+    def tallestBillboard(self, rods: List[int]) -> int:
+        dp = {0:0}							# 用字典存储状态
+        for each in rods:
+            for k,v in list(dp.items()):	# 注意是未更新前的字典值
+                dp[k+each] = max(dp.get(k+each,0),v+each)
+                dp[k-each] = max(dp.get(k-each,0),v)
+        return dp[0]
+```
+
+##### 474. 一和零
+
+* 二维背包，用二维数组来表示当前价值，dp\[i][j]表示**不超过**i个0、j个1时的最大长度。
+
+```python
+class Solution:
+    def findMaxForm(self, strs: List[str], m: int, n: int) -> int:
+        dp = [[0]*(n+1) for _ in range(m+1)]
+        for each in strs:
+            zero, one = each.count('0'), each.count('1')
+            for i in range(m,zero-1,-1):
+                for j in range(n,one-1,-1):
+                    dp[i][j] = max(dp[i][j],dp[i-zero][j-one]+1)
+        return dp[m][n]
+```
+
+##### 879. 盈利计划
+
+* 将任务看作“石头”，“石头”的质量由参与人数和利润两项决定，背包大小受到上限（任务数量）和下限（最少利润）的双重约束，因此是二维背包，dp\[i][j]表示利润**至少**为i，人数不超过j时的计划数。
+
+```python
+class Solution:
+    def profitableSchemes(self, n: int, minProfit: int, group: List[int], profit: List[int]) -> int:
+        dp = [[0]*(n+1) for _ in range(minProfit+1)]
+        for j in range(n+1):    # 没有任务时，利润为0，方案数为1
+            dp[0][j] = 1 
+        mod = 10**9+7
+        for x,y in zip(profit,group):
+            for i in range(minProfit,-1,-1):	# 因为是“至少”，注意下限是0
+                for j in range(n,y-1,-1):
+                    dp[i][j] += dp[max(i-x,0)][j-y] % mod
+        return dp[-1][-1] % mod
+```
+
+##### 背包问题求具体方案
+
+https://www.acwing.com/problem/content/description/12/
+
+* 
+
+```python
+```
+
+##### 数字组合
+
+https://www.acwing.com/problem/content/description/280/
+
+* 
+
+```python
+
+```
+
+#### 完全背包
+
+##### 322. 零钱兑换
+
+### 区间DP
+
+##### 87.扰乱字符串
+
+##### 221. 最大正方形
+
+* 由于正方形的规则性可以采用动态规划，dp\[i][j]表示以matrix(i-1,j-1)为右下角的正方形的最大边长，被最近的三个正方形的最短边约束。
+
+```python
+# 简化为一维dp
+class Solution:
+    def maximalSquare(self, matrix: List[List[str]]) -> int:
+        m, n = len(matrix), len(matrix[0])
+        res = nw = 0
+        dp = [0]*(n+1)
+        for i in range(m):
+            for j in range(1,n+1):
+                dp[j], nw = min(dp[j],dp[j-1],nw)+1 if matrix[i][j-1]=='1' else 0,dp[j]
+                res = max(dp[j],res)
+        return res*res
 ```
 
 
