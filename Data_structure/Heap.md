@@ -194,7 +194,7 @@ class Solution:
         return [each.num for each in heap]
 ```
 
-#### 373. 查找和最小的K对数字
+#### <span id="jump1"> 373. 查找和最小的K对数字</span>
 
 * 大顶堆O(k^2logk)。维护一个大小为k的大顶堆。
 
@@ -436,6 +436,27 @@ class KthLargest:
         return self.hq[0]
 ```
 
+#### 846. 一手顺子
+
+* 每次取出最小的牌，检查是否存在连牌。
+
+```python
+class Solution:
+    def isNStraightHand(self, hand: List[int], groupSize: int) -> bool:
+        if len(hand) % groupSize:
+            return False
+        d = Counter(hand)
+        heapq.heapify(hand)
+        while hand:
+            cur = heapq.heappop(hand)
+            if d[cur]:
+                for i in range(cur,cur+groupSize):
+                    d[i] -= 1
+                    if d[i] < 0:
+                        return False
+        return True
+```
+
 #### 1046. 最后一块石头的重量
 
 * 大顶堆
@@ -453,6 +474,37 @@ class Solution:
                 return -s1
             heapq.heappush(heap,-abs(s1-s2))
         return 0
+```
+
+#### 1488.避免洪水泛滥
+
+* 小顶堆，获得湖泊抽水的顺序。
+
+```python
+class Solution:
+    def avoidFlood(self, rains: List[int]) -> List[int]:
+        lake = defaultdict(deque)   
+        for i,each in enumerate(rains):     # 统计每个湖的下雨日期
+            if each:
+                lake[each].append(i)
+        res = [1]*len(rains)
+        q = []
+        full = set()
+        for i,each in enumerate(rains):
+            if each != 0:
+                res[i] = -1
+                if each in full:   		# 发洪水
+                    return []
+                else:
+                    full.add(each)		
+                    lake[each].popleft()
+                    if lake[each]:
+                        heapq.heappush(q,lake[each][0])   # 将抽水的deadline入堆
+            elif q:
+                idx = heapq.heappop(q)      # 抽取最近会下雨的湖泊
+                res[i] = rains[idx]
+                full.remove(rains[idx])
+        return res
 ```
 
 #### 1705. 吃苹果的最大数目
