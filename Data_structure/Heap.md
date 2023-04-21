@@ -213,23 +213,18 @@ class Solution:
         return [[i,j] for _,i,j in heap]
 ```
 
-* 小顶堆(klogk)。利用两个数组升序的特点，从头开始选取最小的组合。速度较快。
+* 小顶堆(klogk)。利用两个数组升序的特点，(i, j)之后的下一个元素为(i+1,j)或(i,j+1)，逐步将$(i_0,i_1,..,i_n)+j_0,(i_0,i_1,...,i_n)+j_1...$各项中的元素入堆归并。
 
 ```python
 class Solution:
     def kSmallestPairs(self, nums1: List[int], nums2: List[int], k: int) -> List[List[int]]:
-        def push(i,j):
-            if i<len(nums1) and j<len(nums2):
-                heapq.heappush(heap,(nums1[i]+nums2[j],i,j))
-        
-        heap, res = [], []
-        push(0,0)
+        res = []
+        heap = [(nums1[i]+nums2[0],i,0) for i in range(min(k,len(nums1)))]
         while heap and len(res)<k:
             _, i, j = heapq.heappop(heap)
             res.append([nums1[i],nums2[j]])
-            push(i,j+1)		
-            if j == 0:	# 避免重复，由小顶堆确定增大i还是增大j。
-                push(i+1,0)
+            if j+1<len(nums2):
+                heapq.heappush(heap,(nums1[i]+nums2[j+1],i,j+1))
         return res
 ```
 

@@ -2,7 +2,13 @@
 
 ### 相关概念
 
+### 强连通图
 
+在有向图中, 若对于每一对顶点v1和v2, 都存在一条从v1到v2和从v2到v1的路径,则称此图是强连通图。
+
+#### 弱连通图
+
+将有向图的所有的有向边替换为无向边，所得到的图称为原图的基图。如果一个有向图的基图是连通图，则有向图是弱连通图。
 
 ### 图的存储
 
@@ -74,4 +80,54 @@ class Solution:
 
 #### 2097. 合法重新排列数对
 
-#### 
+
+
+## 特殊结构
+
+### 基环树
+
+* 满足**恰好包含一个环**的无向连通图称作基环树；每个点入度都为1的有向弱连通图称作基环外向树；每个点出度都为1的有向弱连通图称作基环内向树。
+
+* 解决方法——通过拓扑排序可以区分树枝和基环，排序完成后：
+  * 从入度为1的点出发遍历基环
+  * 根据反图搜索入度为0的点遍历树枝
+
+#### 5970. 参加会议的最多员工数
+
+* 由于大小为k的连通块具有k个点和k条边，所以一定存在一个环，根据环是否由两个节点构成可以分为两种情况。当基环节点数大于2时，最大基环的节点数即为圆桌最多员工数；基环等于2时，该基环所在的最长链中的节点数为最多相邻员工数，可将多个链进行拼接得到圆桌最多员工数。两种坐法进行比较得到最终解。
+
+```python
+class Solution:
+    def maximumInvitations(self, favorite: List[int]) -> int:
+        n = len(favorite)
+        deg = [0] * n               # 入度
+        for each in favorite:
+            deg[each] += 1
+        q = deque([i for i,each in enumerate(deg) if each==0])
+        max_depth = [0] * n
+        while q:                    # 拓扑排序
+            cur = q.popleft()
+            max_depth[cur] += 1     # 统计树枝上各节点所在链的最大长度
+            nxt = favorite[cur]
+            # 将链的长度传递到相连的环节点上
+            max_depth[nxt] = max(max_depth[cur],max_depth[nxt]) 
+            deg[nxt] -= 1
+            if deg[nxt] == 0:
+                q.append(nxt)
+        max_ring = sum_chain = 0    # 分类讨论
+        for i,d in enumerate(deg):
+            if d!=0:
+                deg[i] = 0
+                ring_size = 1
+                nxt = favorite[i]
+                while nxt != i:     # 计算基环大小
+                    deg[nxt] = 0
+                    ring_size += 1
+                    nxt = favorite[nxt]
+                if ring_size==2:
+                    sum_chain += max_depth[i]+max_depth[favorite[i]]+2
+                else:
+                    max_ring = max(max_ring, ring_size)
+        return max(max_ring,sum_chain)
+```
+

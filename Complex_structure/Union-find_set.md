@@ -17,7 +17,7 @@ class Unionfind:
         return self.p[x]
     
     def union(self,x,y):
-        x, y = self.p[x], self.p[y]
+        x, y = self.find(x), self.find(y)
         if x==y:
             return
         if self.rank[x]<self.rank[y]:

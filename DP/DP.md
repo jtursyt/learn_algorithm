@@ -114,6 +114,36 @@ class Solution:
 
 ##### 304. 二维区域和检索-矩阵不可变
 
+##### I17.24. 最大子矩阵
+
+* 前缀和+最大子数组。遍历不同的行数作为矩阵的两条边，转换为一维的最大子数组，贪心求解。
+
+```python
+class Solution:
+    def getMaxMatrix(self, matrix: List[List[int]]) -> List[int]:
+        m, n = len(matrix), len(matrix[0])
+        prefix = [[0]*n for _ in range(m+1)]
+        for i in range(m):
+            for j in range(n):
+                prefix[i+1][j] += prefix[i][j]+matrix[i][j]
+        r1 = c1 = r2 = c2 = 0
+        res = float('-inf')
+        for i in range(m):
+            for j in range(i,m):
+                cur = [b-a for a,b in zip(prefix[i],prefix[j+1])]
+                l = tmp = 0
+                for r,each in enumerate(cur):
+                    if tmp > 0:
+                        tmp += each
+                    else:
+                        tmp = each
+                        l = r
+                    if tmp > res:
+                        res = tmp
+                        r1, c1, r2, c2 = i,l,j,r
+        return r1,c1,r2,c2
+```
+
 ##### 1477. 找两个和为目标值且不重叠的子数组
 
 * dp[i]记录arr[:i+1]中和为target的最短子数组长度，字典记录前缀和帮助查找满足条件的子数组。
@@ -143,9 +173,57 @@ class Solution:
 
 ##### 70. 爬楼梯
 
+* 到第n-1个台阶的走法 + 第n-2个台阶的走法 = 到第n个台阶的走法。
+
+```python
+class Solution:
+    def climbStairs(self, n: int) -> int:
+        a, b = 1, 0
+        for _ in range(n):
+            a, b = a+b, a
+        return a
+```
+
 ##### 746. 使用最小花费爬楼梯
 
+```python
+class Solution:
+    def minCostClimbingStairs(self, cost: List[int]) -> int:
+        a, b = cost[1], cost[0]
+        for i in range(2,len(cost)):
+            a, b = min(a,b)+cost[i], a
+        return min(a,b)
+```
+
 ##### 509. 斐波那契数
+
+* 矩阵的快速幂。
+
+```python
+class Solution:
+    def m_pow(self,n,a):
+        m = [[1,0],[0,1]]
+        while n > 0:
+            if n&1:
+                m = self.multiply(m,a)
+            n >>= 1
+            a = self.multiply(a,a)
+        return m
+
+    def multiply(self,a,b):
+        res = [[0,0],[0,0]]
+        for i in range(2):
+            for j in range(2):
+                res[i][j] = a[i][0] * b[0][j] + a[i][1] * b[1][j]
+        return res
+
+    def fib(self, n: int) -> int:
+        if n<2:
+            return n
+        m = [[1,1],[1,0]]
+        res = self.m_pow(n-1,m)
+        return res[0][0]
+```
 
 ##### 264. 丑数2
 
@@ -779,6 +857,25 @@ class Solution:
 
 ##### 1218. 最长定差子序列
 
+##### 334. 递增的三元子序列
+
+* 可以转化为求最长递增子序列的长度，如果长度大于等于3则存在递增的三元子序列。实际上只需要确定长度为3的上升子序列存在，所以用于存储子序列的数组长度只需要2，
+
+```python
+class Solution:
+    def increasingTriplet(self, nums: List[int]) -> bool:
+        n = len(nums)
+        fir = sec = inf
+        for each in nums:
+            if each>sec:
+                return True
+            elif fir<each<sec:
+                sec = each
+            elif fir>each:
+                fir = each
+        return False
+```
+
 ##### 354. 俄罗斯套娃信封问题	
 
 * 动态规划。排序后转化为最长（高度）递增子序列。
@@ -1099,6 +1196,10 @@ class Solution:
             memo[each] = i
         return dp[-1]
 ```
+
+##### 518. [零钱兑换 II](#jump1)
+
+##### 377. [组合总和 Ⅳ](#jump2)
 
 #### 双序列
 
@@ -1449,9 +1550,7 @@ class Solution:
         return max(max(each) for each in dp)
 ```
 
-##### 杨老师的照相排列
-
-https://www.acwing.com/problem/content/273/
+##### [杨老师的照相排列](https://www.acwing.com/problem/content/273/)
 
 * bfs，先定义状态，再通过当前状态应该更新哪些未知状态给出状态转移方程。dp[(a1,a2,...,a3)]表示每行分别站了a1,a2,...,a3个学生时排列次数。
 
@@ -1489,9 +1588,7 @@ if __name__ == '__main__':
             break
 ```
 
-##### 最长公共上升子序列
-
-https://www.acwing.com/problem/content/274/
+##### [最长公共上升子序列](https://www.acwing.com/problem/content/274/)
 
 * dp\[i][j]表示A的前i项和B的前j项构成的**以B[j-1]结尾**的最长公共上升子序列的长度。决策集合只增大不减小时，可以维护一个决策集合的最优值做到O(1)的决策。
 
@@ -1530,9 +1627,7 @@ if __name__ == '__main__':
     print(solution.maxCommonUperString(n,A,B))
 ```
 
-##### 分级
-
-https://www.acwing.com/problem/content/275/
+##### [分级](https://www.acwing.com/problem/content/275/)
 
 * dp\[i][j]表示构造长度为i的序列B，最后一项为j时，与A的前i项差的最小值。dp\[i][j]=dp\[i-1][k] (k in [1,j]) + |j-Ai|。
   * 一定存在一个最优解B，其中的元素都在A中出现过，从而将j限制在set(A)中。
@@ -1558,9 +1653,7 @@ if __name__ == '__main__':
     print(min(solution.makegrade(A,n),solution.makegrade(A[::-1],n)))
 ```
 
-##### 饼干
-
-https://www.acwing.com/problem/content/279/
+##### [饼干](https://www.acwing.com/problem/content/279/)
 
 * 怨气值大的孩子分配较多的饼干，对孩子按怨气从大到小进行排序，按照递减的顺序分配饼干，dp\[i][j]表示前i个孩子分配j个饼干时的最小怨气值。按照划分方案中已确定获得1个饼干的孩子数量，该集合可以分成i个子集。
 
@@ -1737,18 +1830,60 @@ class Solution:
         return dp[-1][-1] % mod
 ```
 
-##### 背包问题求具体方案
+##### [背包问题求具体方案](https://www.acwing.com/problem/content/description/12/)
 
-https://www.acwing.com/problem/content/description/12/
-
-* 
+* 因为要选择字典序最小的方案，所以进行DP时要从后往前递推，以便回溯选择时正序进行。
 
 ```python
+class Soulution:
+    def bag(self,n,v,l):
+        dp = [[0]*(v+1) for _ in range(n+1)]
+        for i in range(n-1,-1,-1):
+            a, b = l[i]
+            for j in range(1,v+1):
+                dp[i][j] = dp[i+1][j]		# 注意需要记录没空间且不选当前物品的情况
+                if j >= a:
+                    dp[i][j] = max(dp[i+1][j],dp[i+1][j-a]+b)
+        res = []
+        cur = v
+        for i in range(n):
+            if cur >= l[i][0] and dp[i][cur] == dp[i+1][cur-l[i][0]]+l[i][1]:
+                cur -= l[i][0]
+                res.append(i+1)
+        return res
+
+
+
+if __name__=='__main__':
+    n, v = map(int,input().split())
+    l = []
+    for _ in range(n):
+        l.append(tuple(map(int,input().split())))
+    solu = Soulution()
+    print(*solu.bag(n,v,l))
 ```
 
-##### 数字组合
+##### [数字组合](https://www.acwing.com/problem/content/description/280/)
 
-https://www.acwing.com/problem/content/description/280/
+* 求和类型。
+
+```python
+class Solution:
+    def cnt(self,m,nums):
+        dp = [1]+[0]*m
+        for each in nums:
+            for i in range(m,each-1,-1):
+                dp[i] += dp[i-each]
+        return dp[-1]
+
+if __name__ == '__main__':
+    _, m = map(int,input().split())
+    nums = list(map(int,input().split()))
+    solu = Solution()
+    print(solu.cnt(m,nums))
+```
+
+##### [陪审团](https://www.acwing.com/problem/content/description/282/)
 
 * 
 
@@ -1758,11 +1893,214 @@ https://www.acwing.com/problem/content/description/280/
 
 #### 完全背包
 
+> 有$n$种物品和一个容量为$W$的背包，每个物品有重量$w_i$和价值$v_i$两种属性，并且有无数个，要求选若干物品放入背包使背包中物品的总价值最大且背包中物品的总重量不超过背包的容量。
+
+dp\[i][j]表示从前i种物品中选出总质量为j的物品放入背包时物品的最大价值和，同样根据是否选择第i个物品划分子问题：
+$$
+dp[i][j] = max\left\{\begin{matrix}dp[i-1][j]\\dp[i][j-w_i]+v_i \end{matrix}\right.
+$$
+
+每一阶段i的状态只与上一阶段i-1的状态有关，采用滚动数组的形式优化内存:
+$$
+dp[i] = max(dp[j],dp[j-w_i]+v_i)
+$$
+
+
+与01背包不同的是枚举是**正序**的，因为需要在同处于i阶段之间的状态进行转移。									
+
 ##### 322. 零钱兑换
+
+* dp[i]表示凑齐金额i需要的硬币个数。
+
+```python
+class Solution:
+    def coinChange(self, coins: List[int], amount: int) -> int:
+        dp = [0]+[float('inf')]*amount
+        for each in coins:
+            for i in range(each,amount+1):
+                dp[i] = min(dp[i],dp[i-each]+1)
+        return dp[-1] if dp[-1]!=float('inf') else -1
+```
+
+* bfs
+
+```python
+class Solution:
+    def coinChange(self, coins: List[int], amount: int) -> int:
+        q = deque([amount])
+        visited = set()
+        cnt = 0
+        while q:
+            for _ in range(len(q)):
+                cur = q.popleft()
+                if cur == 0:
+                    return cnt
+                for each in coins:
+                    if cur>=each and cur-each not in visited:
+                        q.append(cur-each)
+                        visited.add(cur-each)
+            cnt += 1
+        return -1
+```
+
+##### <span id="jump1">518. 零钱兑换 II</span>
+
+* 统计**组合**方法数，dp[i]表示和为i时的方法数。
+
+```python
+class Solution:
+    def change(self, amount: int, coins: List[int]) -> int:
+        dp = [1]+[0]*amount
+        for each in coins:
+            for i in range(each,amount+1):
+                dp[i] += dp[i-each]
+        return dp[-1]
+```
+
+##### <span id="jump2">377. 组合总和 Ⅳ</span>
+
+* 统计**排列**方法数，dp[i]表示和为i时的方法数。但注意排列时物品在内循环，阶段由数值总和划分。
+
+```python
+class Solution:
+    def combinationSum4(self, nums: List[int], target: int) -> int:
+        dp = [1]+[0]*target
+        nums.sort()
+        for i in range(1,target+1):
+            for each in nums:
+                if each>i:
+                    break
+                dp[i] += dp[i-each]
+        return dp[-1]
+```
+
+##### <span id="jump3">638. 大礼包</span>
+
+* dfs，记忆化搜索更易解决。
+
+```python
+class Solution:
+    def shoppingOffers(self, price: List[int], special: List[List[int]], needs: List[int]) -> int:
+        @functools.lru_cache(None)
+        def dfs(cur):
+            if not any(cur):
+                return 0
+            res = sum(price[i]*cur[i] for i in range(n))
+            for each in filter_special:
+                nxt = tuple(cur[i]-each[i] for i in range(n))
+                if min(nxt) >= 0:
+                    res = min(res,each[-1]+dfs(nxt))
+            return res
+        
+        filter_special = []
+        for sp in special:
+            if sum(sp[i] for i in range(n)) > 0 and sum(sp[i] * price[i] for i in range(n)) > sp[-1]:
+                filter_special.append(sp)
+        n = len(price)
+        return dfs(tuple(needs))
+```
+
+* 状态压缩dp，每个状态定义为$dp(i,j_0,j_1,...,j_{n-1})$，即考虑前i个礼包，物品购买j个时的最小花费，采用排列数对状态维度进行压缩，将状态简化为十进制整数。`超时 待优化`
+
+```python
+class Solution:
+    def shoppingOffers(self, price: List[int], special: List[List[int]], needs: List[int]) -> int:
+        n = len(price)
+        g = [1] * (n+1)
+        # 构造排列数，长度为n，每位进制不同，代表该物品需要买的数量。
+        for i in range(1,n+1):
+            g[i] = g[i-1]*(needs[i-1]+1)    # 保存和十进制的映射关系
+        dp =  [0]+ [inf] * (g[n]-1)               # 转化为一维完全背包
+        # 必须遍历状态才能同时处理单独购买和礼包购买两种情况
+        for state in range(1,g [n]):       
+            cur = [0]*n
+            for i in range(n):
+                cur[i] = state % g[i+1] // g[i]   # 将状态转换回数组形式
+            for i in range(n):                    # 单独购买物品
+                if cur[i]>0:
+                    dp[state] = min(dp[state],dp[state-g[i]]+price[i])
+            for each in special:                  # 购买礼包
+                tmp = state
+                flag = False
+                for i in range(n):
+                    if cur[i]<each[i]:
+                        flag = True
+                        break
+                    tmp -= each[i] * g[i]
+                if flag:
+                    continue
+                dp[state] = min(dp[state],dp[tmp]+each[n])
+        return dp[-1]
+```
+
+##### 1449. 数位成本和为目标值的最大数字
+
+求背包容量为 target，物品重量为cost[i]，价值为 1的完全背包问题。dp\[i][j]表示使用前i个数、成本和恰好为j。
+
+* 记录过程中选择的数字。
+
+```python
+class Solution:
+    def largestNumber(self, cost: List[int], target: int) -> str:
+        # 排除花费中的重复项和过大项
+        c = Counter(cost)
+        costs = []
+        for i,each in enumerate(cost,1):
+            if c[each]==1 and each <= target:
+                costs.append((i,each))
+            else:
+                c[each]-=1
+        # 在数字相同的情况下较小数字优先放置在低位
+        costs = sorted(d.items(),key=lambda x:x[1])	
+        dp = ['']+['0']*target
+        for c,i in costs:
+            for j in range(c,target+1):
+                if dp[j-c]!='0':
+                    dp[j] = max(dp[j],str(i)+dp[j-c],key=lambda x: (len(x),x))
+        return dp[-1]      
+```
+
+* 根据结果倒推。
+
+```python
+class Solution:
+    def largestNumber(self, cost: List[int], target: int) -> str:
+        c = Counter(cost)
+        costs = []
+        for i,each in enumerate(cost,1):
+            if c[each]==1 and each <= target:
+                costs.append((i,each))
+            else:
+                c[each]-=1
+        dp = [0]+[float('-inf')]*target
+        for i,c in costs:
+            for j in range(c,target+1):
+                dp[j] = max(dp[j],dp[j-c]+1)
+        if dp[-1]<0:
+            return '0'
+        cur = target
+        res = []
+        for i,c in costs[::-1]:
+            while cur>=c and dp[cur] == dp[cur-c]+1:
+                res.append(str(i))
+                cur -= c
+        return ''.join(res)
+```
+
+
 
 ### 区间DP
 
+区间DP属于线性DP的一种，以区间长度作为DP的阶段，使用两个端点坐标描述每个维度，每个状态由若干比它小且包含于它的状态转移而来。
+
 ##### 87.扰乱字符串
+
+* 
+
+```pyhton
+```
+
+
 
 ##### 221. 最大正方形
 
@@ -1782,9 +2120,9 @@ class Solution:
         return res*res
 ```
 
-
-
 ### 状态压缩DP
 
 ##### 1434. 每个人戴不同帽子的方案数
+
+##### 638. [大礼包](#jump3)
 
