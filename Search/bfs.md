@@ -1,10 +1,14 @@
-## 广度优先搜索
+## 树
 
 
+
+### 搜索
+
+深度优先搜索利用函数递归或栈的先入后出结构实现，广度优先搜索利用队列的先入先出结构实现。
 
 #### 1036. 逃离大迷宫
 
-* 网格过大，需要考虑提前退出的机制，进行<u>有限步数的搜索</u>。从障碍点个数入手，其包围的最佳方式是与网格的边够丑等腰直角三角形，可以得到包围圈中的最大点数。起点和终点进行双向bfs，检查其是否被围住。
+* bfs。网格过大，需要考虑提前退出的机制，进行<u>有限步数的搜索</u>。从障碍点个数入手，其包围的最佳方式是与网格的边够丑等腰直角三角形，可以得到包围圈中的最大点数。起点和终点进行双向bfs，检查其是否被围住。
 
 ```python
 class Solution:
@@ -42,4 +46,75 @@ class Solution:
                 return True
             return False
 ```
+
+
+
+#### 1376.通知所有员工所用的时间
+
+* dfs
+
+```python
+class Solution:
+    def numOfMinutes(self, n: int, headID: int, manager: List[int], informTime: List[int]) -> int:
+        graph = [[] for _ in range(n)]
+        for i,x in enumerate(manager):  	# 邻接矩阵
+            if x == -1:
+                continue
+            graph[x].append(i)
+        res = 0
+        cur = [(headID,informTime[headID])]	
+        while cur:
+            idx, cost = cur.pop()
+            if not graph[idx]:
+                res = max(res,cost)    	 	# 搜索到底
+                continue
+            for each in graph[idx]:
+                cur.append((each,cost+informTime[each]))
+        return res
+```
+
+```python
+# 递归调用
+class Solution:
+    def numOfMinutes(self, n: int, headID: int, manager: List[int], informTime: List[int]) -> int:
+        graph = [[] for _ in range(n)]
+        for i,x in enumerate(manager):  
+            if x == -1:
+                continue
+            graph[x].append(i)
+        
+        def dfs(idx):
+            if not graph[idx]:
+                return 0
+            cur = 0
+            for each in graph[idx]:
+                cur = max(cur,informTime[idx]+dfs(each))
+            return cur
+
+        return dfs(headID)
+```
+
+* bfs
+
+```python
+class Solution:
+    def numOfMinutes(self, n: int, headID: int, manager: List[int], informTime: List[int]) -> int:
+        graph = [[] for _ in range(n)]
+        for i,x in enumerate(manager):  # 邻接矩阵
+            if x == -1:
+                continue
+            graph[x].append(i)
+        res = 0
+        cur = deque([(headID,informTime[headID])])
+        while cur:
+            idx, cost = cur.popleft()
+            if not graph[idx]:
+                res = max(res,cost)
+                continue
+            for each in graph[idx]:
+                cur.append((each,cost+informTime[each]))
+        return res
+```
+
+
 

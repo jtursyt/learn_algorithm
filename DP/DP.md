@@ -112,7 +112,11 @@ class Solution:
 
 ##### 303. 区域和检索-数组不可变
 
+
+
 ##### 304. 二维区域和检索-矩阵不可变
+
+
 
 ##### I17.24. 最大子矩阵
 
@@ -299,6 +303,28 @@ class Solution:
 ```
 
 ##### 740. 删除与获得点数
+
+
+
+##### 1027. 最长等差数列
+
+* 利用字典存储状态。dp\[i][j]存储以列表中第j个数结尾、公差为j的序列长度，相比最长递增子序列多了一项公差需要考虑。
+
+```python
+class Solution:
+    def longestArithSeqLength(self, nums: List[int]) -> int:
+        dp = [{} for _ in range(len(nums))]
+        res = 2
+        for i in range(1,len(nums)):
+            for j in range(i-1,-1,-1):
+                diff = nums[i] - nums[j]
+                if diff not in dp[i]:
+                    dp[i][diff] = dp[j].get(diff,1) + 1
+                    res = max(res,dp[i][diff])
+        return res
+```
+
+
 
 #### 最优解问题
 
@@ -544,7 +570,7 @@ class Solution:
 
 ##### 1105. 填充书架
 
-* dp[i]表示放置book[i]需要的书架最小高度。
+* 问题的关键是按顺序放置，所以满足了动态规划无后效性的要求，dp[i]表示放置前i本书需要的书架最小高度。
 
 ```python
 class Solution:
@@ -857,6 +883,13 @@ class Solution:
 
 ##### 1218. 最长定差子序列
 
+* 
+
+```python
+```
+
+
+
 ##### 334. 递增的三元子序列
 
 * 可以转化为求最长递增子序列的长度，如果长度大于等于3则存在递增的三元子序列。实际上只需要确定长度为3的上升子序列存在，所以用于存储子序列的数组长度只需要2，
@@ -915,6 +948,24 @@ class Solution:
                         r = mid - 1
                 stack[l] = h
         return len(stack)
+```
+
+##### 1048. 最长字符串链
+
+* 用哈希表存储状态，dp[word]表示以该单词结尾的最长字符串链。搜索所有可能的前身，找到最长的字符串。
+
+```python
+class Solution:
+    def longestStrChain(self, words: List[str]) -> int:
+        words.sort(key=len)
+        dp = {}
+        res = 1
+        for each in words:
+            dp[each] = 1
+            for i in range(len(each)):
+                dp[each] = max(dp[each],dp.get(each[:i]+each[i+1:],0)+1)
+            res = max(res,dp[each])
+        return res
 ```
 
 ##### 1671. 得到山形数组的最少删除次数
@@ -2095,9 +2146,42 @@ class Solution:
 
 ##### 87.扰乱字符串
 
-* 
+* 自底向上，从最短的字符串开始，判断两个字符串是否对应，`dp[i][j][len]` 表示从字符串 S 中 i 开始长度为 len+1 的字符串是否能变换为从字符串 T 中 j 开始长度为 len +1的字符串。
 
-```pyhton
+```python
+class Solution:
+    def isScramble(self, s1: str, s2: str) -> bool:
+        if s1 == s2:
+            return True
+        n = len(s1)
+        dp = [[[False]*n for _ in range(n)] for _ in range(n)]
+        for l in range(n):
+            for i in range(n-l):
+               for j in range(n-l):
+                    if l==0:
+                        dp[i][j][l] = (s1[i]==s2[j])
+                    else:
+                        for k in range(l):
+                            if (dp[i][j][k] and dp[i+k+1][j+k+1][l-k-1]) or (dp[i][j+l-k][k] and dp[i+k+1][j][l-k-1]):
+                                dp[i][j][l] = True
+                                break
+        return dp[0][0][-1]
+```
+
+* 自顶向下
+
+```python
+class Solution:
+    @cache
+    def isScramble(self, s1: str, s2: str) -> bool:
+        if s1==s2:
+            return True
+        if sorted(s1) != sorted(s2):
+            return False
+        for i in range(1,len(s1)):
+            if (self.isScramble(s1[:i],s2[:i]) and self.isScramble(s1[i:],s2[i:])) or (self.isScramble(s1[:i],s2[-i:]) and self.isScramble(s1[i:],s2[:-i])):
+                return True
+        return False
 ```
 
 
